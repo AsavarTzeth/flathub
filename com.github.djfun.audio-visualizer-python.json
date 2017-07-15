@@ -1,0 +1,132 @@
+{
+  "app-id": "com.github.djfun.audio-visualizer-python",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "1.6",
+  "sdk": "org.freedesktop.Sdk",
+  "command": "avpython-wrapper.sh",
+  "finish-args": [
+    "--socket=wayland",
+    "--socket=x11",
+    "--socket=pulseaudio",
+    "--filesystem=home:rw"
+  ],
+  "cleanup": [
+    "/include"
+  ],
+  "modules": [
+    {
+      "name": "audio-visualizer-python",
+      "buildsystem": "simple",
+      "build-commands": [
+        "cp -r src /app/lib/python3.5/site-packages/avpython",
+        "install -Dm755 avpython-wrapper.sh /app/bin/avpython-wrapper.sh",
+        "install -Dm644 com.github.djfun.audio-visualizer-python.appdata.xml /app/share/appdata/com.github.djfun.audio-visualizer-python.appdata.xml"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "url": "https://github.com/djfun/audio-visualizer-python.git",
+          "branch": "feature-newgui",
+          "commit": "94d4acc1f4f4abe4029e8f9c050932b67cae8cec"
+        },
+        { "type": "script",
+          "commands": [
+            "python3 /app/lib/python3.5/site-packages/avpython/main.py"
+          ],
+          "dest-filename": "avpython-wrapper.sh"
+        },
+        {
+          "type": "file",
+          "path": "com.github.djfun.audio-visualizer-python.appdata.xml"
+        }
+      ],
+      "modules": [
+        "qt5-qtbase-5.9.1.json",
+        {
+          "name": "pyqt5",
+          "buildsystem": "simple",
+          "build-commands": [
+            "pip3 install --prefix=/app PyQt5-5.9-5.9.1-cp35.cp36.cp37-abi3-manylinux1_x86_64.whl"
+          ],
+          "sources": [{
+            "type": "file",
+            "url": "https://pypi.python.org/packages/45/63/353403622330d335631ec3a3016f9e0a6a9519082488b1421003682f8ef4/PyQt5-5.9-5.9.1-cp35.cp36.cp37-abi3-manylinux1_x86_64.whl",
+            "sha256": "18cff7c0d0eb9f7c5783929f21fd7a49904e49827aeec88359cf60cccbd94a86"
+          }],
+          "modules": [{
+            "name": "sip",
+            "buildsystem": "simple",
+            "build-commands": [
+              "pip3 install --prefix=/app sip-4.19.3-cp35-cp35m-manylinux1_x86_64.whl"
+            ],
+            "sources": [{
+              "type": "file",
+              "url": "https://pypi.python.org/packages/e5/d3/909f9971037c79bbd0c8a59bf8ba2b5359bf1384a1a8973daff838388af6/sip-4.19.3-cp35-cp35m-manylinux1_x86_64.whl",
+              "sha256": "41077431be4c4b1bde0db19ca022ffbf4a4ef62593482694be3565eadae33c92"
+            }]
+          }]
+        },
+        {
+          "name": "ffmpeg",
+          "cleanup": ["/include", "/lib/pkgconfig", "/share"],
+          "config-opts": [
+            "--enable-shared",
+            "--disable-static",
+            "--enable-gnutls",
+            "--disable-doc",
+            "--disable-ffprobe",
+            "--disable-ffserver",
+            "--disable-devices",
+            "--enable-libfreetype",
+            "--enable-libvorbis",
+            "--enable-libvpx",
+            "--disable-cuda",
+            "--disable-cuvid"
+          ],
+          "sources": [{
+            "type": "archive",
+            "url": "https://ffmpeg.org/releases/ffmpeg-3.3.2.tar.xz",
+            "sha256": "1998de1ab32616cbf2ff86efc3f1f26e76805ec5dc51e24c041c79edd8262785"
+          }]
+        },
+        {
+          "name": "numpy",
+          "buildsystem": "simple",
+          "build-commands": [
+            "pip3 install --prefix=/app numpy-1.13.1-cp35-cp35m-manylinux1_x86_64.whl"
+          ],
+          "sources": [{
+            "type": "file",
+            "url": "https://pypi.python.org/packages/1a/45/40d946e712d4f2a767db001f58020e33b7d1dc77c09fab03a5883336792d/numpy-1.13.1-cp35-cp35m-manylinux1_x86_64.whl",
+            "sha256": "9a8515002f143a5934f25ad2aacdfd1fcf57a7f5da6142c439eb8787ef65e8a6"
+          }]
+        },
+        {
+          "name": "pillow-simd",
+          "buildsystem": "simple",
+          "build-commands": [
+            "python3 setup.py install --prefix=/app --root=/ --optimize=1"
+          ],
+          "sources": [{
+            "type": "git",
+            "url": "https://github.com/uploadcare/pillow-simd.git",
+            "branch": "4.1.1",
+            "commit": "2b4486a588bfa2bbf9ecc8dae51282d81fa5d668"
+          }],
+          "modules": [{
+            "name": "olefile",
+            "buildsystem": "simple",
+            "build-commands": [
+              "pip3 install --prefix=/app ."
+            ],
+            "sources": [{
+              "type": "archive",
+              "url": "https://pypi.python.org/packages/35/17/c15d41d5a8f8b98cc3df25eb00c5cee76193114c78e5674df6ef4ac92647/olefile-0.44.zip",
+              "sha256": "61f2ca0cd0aa77279eb943c07f607438edf374096b66332fae1ee64a6f0f73ad"
+            }]
+          }]
+        }
+      ]
+    }
+  ]
+}
