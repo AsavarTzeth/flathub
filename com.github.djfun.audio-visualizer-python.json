@@ -73,9 +73,13 @@
             "--disable-ffserver",
             "--disable-devices",
             "--enable-gnutls",
+            "--enable-gpl",
             "--enable-libfreetype",
+            "--enable-libmp3lame",
             "--enable-libvorbis",
             "--enable-libvpx",
+            "--enable-libx264",
+            "--enable-libxvid",
             "--disable-cuda",
             "--disable-cuvid"
           ],
@@ -83,7 +87,45 @@
             "type": "archive",
             "url": "https://ffmpeg.org/releases/ffmpeg-3.3.2.tar.xz",
             "sha256": "1998de1ab32616cbf2ff86efc3f1f26e76805ec5dc51e24c041c79edd8262785"
-          }]
+          }],
+          "modules": [
+            {
+              "name": "lame",
+              "config-opts": [
+                "--enable-shared",
+                "--disable-static"
+              ],
+              "sources": [{
+                "type": "archive",
+                "url": "https://downloads.sourceforge.net/lame/lame-3.99.5.tar.gz",
+                "sha256": "24346b4158e4af3bd9f2e194bb23eb473c75fb7377011523353196b19b9a23ff"
+              }]
+            },
+            {
+              "name": "libx264",
+              "config-opts": [
+                "--enable-shared"
+              ],
+              "sources": [{
+                "type": "git",
+                "url": "https://git.videolan.org/git/x264.git",
+                "branch": "stable",
+                "commit": "aaa9aa83a111ed6f1db253d5afa91c5fc844583f"
+              }]
+            },
+            {
+              "name": "xvid",
+              "config-opts": [
+                "--prefix=/app"
+              ],
+              "subdir": "build/generic",
+              "sources": [{
+                "type": "archive",
+                "url": "http://downloads.xvid.org/downloads/xvidcore-1.3.4.tar.bz2",
+                "sha256": "5faf6380b828db8ad29f0b69f030edf86d0fe26d1f9c5427030c6accd3ad8bf7"
+              }]
+            }
+          ]
         },
         {
           "name": "numpy",
