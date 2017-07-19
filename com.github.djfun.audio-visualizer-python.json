@@ -3,12 +3,13 @@
   "runtime": "org.freedesktop.Platform",
   "runtime-version": "1.6",
   "sdk": "org.freedesktop.Sdk",
-  "command": "avpython-wrapper.sh",
+  "command": "avp",
   "finish-args": [
     "--socket=wayland",
     "--socket=x11",
     "--socket=pulseaudio",
-    "--filesystem=home:rw"
+    "--filesystem=home:rw",
+    "--persist=.config/audio-visualizer"
   ],
   "cleanup": [
     "/include"
@@ -18,27 +19,22 @@
       "name": "audio-visualizer-python",
       "buildsystem": "simple",
       "build-commands": [
-        "cp -r src /app/lib/python3.5/site-packages/avpython",
-        "install -Dm755 avpython-wrapper.sh /app/bin/avpython-wrapper.sh",
-        "install -Dm644 com.github.djfun.audio-visualizer-python.appdata.xml /app/share/appdata/com.github.djfun.audio-visualizer-python.appdata.xml"
+        "python3 setup.py install --prefix=/app --root=/ --optimize=1"
       ],
       "sources": [
         {
           "type": "git",
           "url": "https://github.com/djfun/audio-visualizer-python.git",
-          "branch": "feature-newgui",
-          "commit": "94d4acc1f4f4abe4029e8f9c050932b67cae8cec"
-        },
-        { "type": "script",
-          "commands": [
-            "python3 /app/lib/python3.5/site-packages/avpython/main.py"
-          ],
-          "dest-filename": "avpython-wrapper.sh"
+          "branch": "setup-fix",
+          "commit": "17c8a6703a8093d31c6772ba3b8d9ee01adaa0da"
         },
         {
           "type": "file",
           "path": "com.github.djfun.audio-visualizer-python.appdata.xml"
         }
+      ],
+      "post-install": [
+        "install -Dm644 com.github.djfun.audio-visualizer-python.appdata.xml /app/share/appdata/com.github.djfun.audio-visualizer-python.appdata.xml"
       ],
       "modules": [
         "qt5-qtbase-5.9.1.json",
@@ -72,11 +68,11 @@
           "config-opts": [
             "--enable-shared",
             "--disable-static",
-            "--enable-gnutls",
             "--disable-doc",
             "--disable-ffprobe",
             "--disable-ffserver",
             "--disable-devices",
+            "--enable-gnutls",
             "--enable-libfreetype",
             "--enable-libvorbis",
             "--enable-libvpx",
@@ -108,16 +104,15 @@
             "python3 setup.py install --prefix=/app --root=/ --optimize=1"
           ],
           "sources": [{
-            "type": "git",
-            "url": "https://github.com/uploadcare/pillow-simd.git",
-            "branch": "4.1.1",
-            "commit": "2b4486a588bfa2bbf9ecc8dae51282d81fa5d668"
+            "type": "archive",
+            "url": "https://pypi.python.org/packages/b0/d7/c671de32baf7a5e8a9a505096b004b285b83963a49dd0bd0b1c3c16b7b3d/Pillow-SIMD-4.1.1.post0.tar.gz",
+            "sha256": "09e5c8e4835db7cc90a0b9ad305a2d280a69f4e5fb3371dcc4abde86b41ecc0b"
           }],
           "modules": [{
             "name": "olefile",
             "buildsystem": "simple",
             "build-commands": [
-              "pip3 install --prefix=/app ."
+              "python3 setup.py install --prefix=/app --root=/ --optimize=1"
             ],
             "sources": [{
               "type": "archive",
