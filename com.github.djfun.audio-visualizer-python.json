@@ -5,14 +5,16 @@
   "sdk": "org.freedesktop.Sdk",
   "command": "avp.wrapper",
   "finish-args": [
+    /* X11 + XShm access */
+    "--share=ipc", "--socket=x11",
     "--socket=wayland",
-    "--socket=x11",
     "--socket=pulseaudio",
     "--filesystem=home:rw",
     "--persist=.config/audio-visualizer"
   ],
   "cleanup": [
-    "/include"
+    "/include",
+    "/lib/pkgconfig"
   ],
   "modules": [
     {
@@ -69,11 +71,12 @@
         },
         {
           "name": "ffmpeg",
-          "cleanup": ["/include", "/lib/pkgconfig", "/share"],
+          "cleanup": ["/share"],
           "config-opts": [
             "--enable-shared",
             "--disable-static",
             "--disable-doc",
+            "--disable-ffplay",
             "--disable-ffprobe",
             "--disable-ffserver",
             "--disable-devices",
@@ -84,6 +87,7 @@
             "--enable-libvorbis",
             "--enable-libvpx",
             "--enable-libx264",
+            "--enable-libxcb",
             "--enable-libxvid",
             "--disable-cuda",
             "--disable-cuvid"
@@ -97,8 +101,10 @@
             {
               "name": "lame",
               "config-opts": [
-                "--enable-shared",
-                "--disable-static"
+                "--disable-static",
+                "--disable-frontend",
+                /* Disable docs */
+                "--datarootdir=/"
               ],
               "sources": [{
                 "type": "archive",
@@ -109,7 +115,8 @@
             {
               "name": "libx264",
               "config-opts": [
-                "--enable-shared"
+                "--enable-shared",
+                "--disable-cli"
               ],
               "sources": [{
                 "type": "git",
@@ -120,9 +127,7 @@
             },
             {
               "name": "xvid",
-              "config-opts": [
-                "--prefix=/app"
-              ],
+              "cleanup": ["/lib/libxvidcore.a"],
               "subdir": "build/generic",
               "sources": [{
                 "type": "archive",
