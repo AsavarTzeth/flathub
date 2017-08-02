@@ -28,7 +28,7 @@
           "type": "git",
           "url": "https://github.com/djfun/audio-visualizer-python.git",
           "branch": "feature-newgui",
-          "commit": "4becfe3b51ae058dc8600abeac3d1d6b5a1eab76"
+          "commit": "6f8f178778c63f10b3bda42507c7d44f98884fcd"
         },
         {
           "type": "file",
@@ -47,31 +47,54 @@
         "qt5-qtbase-5.9.1.json",
         {
           "name": "pyqt5",
-          "buildsystem": "simple",
-          "build-commands": [
-            "pip3 install --prefix=/app PyQt5-5.9-5.9.1-cp35.cp36.cp37-abi3-manylinux1_x86_64.whl"
+          "sources": [
+            {
+              "type": "archive",
+              "url": "https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.9/PyQt5_gpl-5.9.tar.gz",
+              "sha256": "ab0e7999cf202cc72962c78aefe461d16497b3c1a8282ab966ad90b6cb271096"
+            },
+            {
+              "type": "script",
+              "commands": [
+                "python3 configure.py \\",
+                "--confirm-license \\",
+                "--assume-shared \\",
+                "--no-designer-plugin \\",
+                "--no-docstrings \\",
+                "--no-tools \\",
+                "--no-qsci-api \\",
+                "--destdir=/app/lib/python3.5/site-packages \\",
+                "--stubsdir=/app/lib/python3.5/site-packages \\",
+                "--sipdir=/app/share/sip"
+              ],
+              "dest-filename": "configure"
+            }
           ],
-          "sources": [{
-            "type": "file",
-            "url": "https://pypi.python.org/packages/45/63/353403622330d335631ec3a3016f9e0a6a9519082488b1421003682f8ef4/PyQt5-5.9-5.9.1-cp35.cp36.cp37-abi3-manylinux1_x86_64.whl",
-            "sha256": "18cff7c0d0eb9f7c5783929f21fd7a49904e49827aeec88359cf60cccbd94a86"
-          }],
           "modules": [{
             "name": "sip",
-            "buildsystem": "simple",
-            "build-commands": [
-              "pip3 install --prefix=/app sip-4.19.3-cp35-cp35m-manylinux1_x86_64.whl"
-            ],
-            "sources": [{
-              "type": "file",
-              "url": "https://pypi.python.org/packages/e5/d3/909f9971037c79bbd0c8a59bf8ba2b5359bf1384a1a8973daff838388af6/sip-4.19.3-cp35-cp35m-manylinux1_x86_64.whl",
-              "sha256": "41077431be4c4b1bde0db19ca022ffbf4a4ef62593482694be3565eadae33c92"
-            }]
+            "sources": [
+              {
+                "type": "archive",
+                "url": "https://sourceforge.net/projects/pyqt/files/sip/sip-4.19.3/sip-4.19.3.tar.gz",
+                "sha256": "740df844f80cc45dcc9b23294a92492923bc403ce88e68c35783f27c177c4b74"
+              },
+              {
+                "type": "script",
+                "commands": [
+                  "python3 configure.py \\",
+                  "--bindir=/app/bin \\",
+                  "--destdir=/app/lib/python3.5/site-packages \\",
+                  "--incdir=/app/include \\",
+                  "--pyidir=/app/lib/python3.5/site-packages \\",
+                  "--sipdir=/app/share/sip"
+                ],
+                "dest-filename": "configure"
+              }
+            ]
           }]
         },
         {
           "name": "ffmpeg",
-          "cleanup": ["/share"],
           "config-opts": [
             "--enable-shared",
             "--disable-static",
@@ -97,6 +120,7 @@
             "url": "https://ffmpeg.org/releases/ffmpeg-3.3.2.tar.xz",
             "sha256": "1998de1ab32616cbf2ff86efc3f1f26e76805ec5dc51e24c041c79edd8262785"
           }],
+          "cleanup": ["/share"],
           "modules": [
             {
               "name": "lame",
@@ -127,13 +151,13 @@
             },
             {
               "name": "xvid",
-              "cleanup": ["/lib/libxvidcore.a"],
               "subdir": "build/generic",
               "sources": [{
                 "type": "archive",
                 "url": "http://downloads.xvid.org/downloads/xvidcore-1.3.4.tar.bz2",
                 "sha256": "5faf6380b828db8ad29f0b69f030edf86d0fe26d1f9c5427030c6accd3ad8bf7"
-              }]
+              }],
+              "cleanup": ["/lib/libxvidcore.a"]
             }
           ]
         },
@@ -141,12 +165,12 @@
           "name": "numpy",
           "buildsystem": "simple",
           "build-commands": [
-            "pip3 install --prefix=/app numpy-1.13.1-cp35-cp35m-manylinux1_x86_64.whl"
+            "pip3 install --prefix=/app --no-deps --verbose ."
           ],
           "sources": [{
-            "type": "file",
-            "url": "https://pypi.python.org/packages/1a/45/40d946e712d4f2a767db001f58020e33b7d1dc77c09fab03a5883336792d/numpy-1.13.1-cp35-cp35m-manylinux1_x86_64.whl",
-            "sha256": "9a8515002f143a5934f25ad2aacdfd1fcf57a7f5da6142c439eb8787ef65e8a6"
+            "type": "archive",
+            "url": "https://github.com/numpy/numpy/releases/download/v1.13.1/numpy-1.13.1.tar.gz",
+            "sha256": "de020ec06f1e9ce1115a50161a38bf8d4c2525379900f9cb478cc613a1e7cd93"
           }]
         },
         {
@@ -168,8 +192,8 @@
             ],
             "sources": [{
               "type": "archive",
-              "url": "https://pypi.python.org/packages/35/17/c15d41d5a8f8b98cc3df25eb00c5cee76193114c78e5674df6ef4ac92647/olefile-0.44.zip",
-              "sha256": "61f2ca0cd0aa77279eb943c07f607438edf374096b66332fae1ee64a6f0f73ad"
+              "url": "https://github.com/decalage2/olefile/releases/download/v0.44/olefile-0.44.tar.gz",
+              "sha256": "021fbed5c539881d7f1360fb27e942fdfa7c78006bed39e6cd6f3dd9e7bd68da"
             }]
           }]
         }
