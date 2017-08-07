@@ -28,7 +28,7 @@
           "type": "git",
           "url": "https://github.com/djfun/audio-visualizer-python.git",
           "branch": "feature-newgui",
-          "commit": "6f8f178778c63f10b3bda42507c7d44f98884fcd"
+          "commit": "20905230fe6df814fdaa6173b266dd7de51bd269"
         },
         {
           "type": "file",
