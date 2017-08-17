@@ -1,0 +1,106 @@
+id: com.danplanet.chirp
+runtime: org.gnome.Platform
+runtime-version: 3.28
+sdk: org.gnome.Sdk
+command: chirpw
+rename-desktop-file: chirp.desktop
+rename-icon: chirp
+copy-icon: true
+finish-args:
+    # X11 + XShm access
+  - --share=ipc
+  - --socket=x11
+    # Device access (radios)
+  - --device=all
+cleanup:
+  - '*.a'
+  - '*.h'
+  - '*.la'
+  - /include
+  - /lib/pkgconfig
+
+modules:
+
+  - name: chirp
+    buildsystem: simple
+    build-commands:
+      - python2 setup.py install --prefix=/app --root=/ --optimize=1
+    sources:
+      - type: archive
+        url: 'https://trac.chirp.danplanet.com/chirp_daily/LATEST/chirp-daily-20180811.tar.gz'
+        sha256: c536994f594277ccd7016fe69bef13ec660c215982b4a148d52fe876acf0f9f4
+    cleanup:
+      - /bin/rpttool
+      - /share/man
+    modules:
+
+      - name: python2-pyserial
+        buildsystem: simple
+        build-commands:
+          - python2 setup.py install --prefix=/app --root=/ --optimize=1
+        sources:
+          - type: git
+            url: 'https://github.com/pyserial/pyserial.git'
+            tag: v3.2.1
+            commit: ffb44d6d7394e2b73bfb1bb91dd69c377c0f8aa0
+        post-install:
+          - install -Dm644 -t /app/share/licenses/python2-pyserial LICENSE.txt
+        cleanup:
+          - /bin/miniterm.py
+
+      - name: python2-lxml
+        buildsystem: simple
+        build-commands:
+          - python2 setup.py build
+          - python2 setup.py install --prefix=/app --root=/ --optimize=1
+        build-options:
+          env:
+            XSLT_CONFIG: pkg-config libxslt
+        sources:
+          - type: archive
+            url: 'https://files.pythonhosted.org/packages/ca/63/139b710671c1655aed3b20c1e6776118c62e9f9311152f4c6031e12a0554/lxml-4.2.4.tar.gz'
+            sha256: e2afbe403090f5893e254958d02875e0732975e73c4c0cdd33c1f009a61963ca
+        post-install:
+          - install -Dm644 -t /app/share/licenses/python2-lxml LICENSES.txt
+                           ./doc/licenses/BSD.txt ./doc/licenses/elementtree.txt
+                           ./doc/licenses/GPL.txt ./doc/licenses/ZopePublicLicense.txt
+
+      - name: python2-cairo
+        buildsystem: simple
+        build-commands:
+          - python2 setup.py install --prefix=/app --root=/ --optimize=1
+        sources:
+          - type: git
+            url: 'https://github.com/pygobject/pycairo.git'
+            branch: v1.17.1
+            commit: df9b51e344a5ee5763ed1c320dc3385782e0bbae
+        post-install:
+          - install -Dm644 -t /app/share/licenses/python2-cairo COPYING COPYING-MPL-1.1
+
+      - name: python2-gobject2
+        build-options:
+          env:
+            PYTHON: python2
+        sources:
+          - type: archive
+            url: 'https://download.gnome.org/sources/pygobject/2.28/pygobject-2.28.7.tar.xz'
+            sha256: bb9d25a3442ca7511385a7c01b057492095c263784ef31231ffe589d83a96a5a
+        post-install:
+          - install -Dm644 -t /app/share/licenses/python2-gobject2 COPYING
+        cleanup:
+          - /bin
+          - /share/gtk-doc
+
+      - name: pygtk
+        config-opts:
+          - --without-glade
+        sources:
+          - type: archive
+            url: 'https://download.gnome.org/sources/pygtk/2.24/pygtk-2.24.0.tar.bz2'
+            sha256: cd1c1ea265bd63ff669e92a2d3c2a88eb26bcd9e5363e0f82c896e649f206912
+        post-install:
+          - install -Dm644 -t /app/share/licenses/pygtk COPYING
+        cleanup:
+          - /bin
+          - /lib/pygtk/demos
+          - /share/gtk-doc
