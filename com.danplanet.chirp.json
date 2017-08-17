@@ -1,0 +1,127 @@
+{
+  "app-id": "com.danplanet.chirp",
+  "runtime": "org.gnome.Platform",
+  "runtime-version": "3.24",
+  "sdk": "org.gnome.Sdk",
+  "command": "chirpw",
+  "rename-desktop-file": "chirp.desktop",
+  "rename-icon": "chirp",
+  "finish-args": [
+    "--socket=wayland",
+    "--socket=pulseaudio",
+    /* X11 + XShm access */
+    "--share=ipc", "--socket=x11"
+  ],
+  "cleanup": [
+    "/include",
+    "/lib/pkgconfig"
+  ],
+  "modules": [
+    {
+      "name": "chirp",
+      "buildsystem": "simple",
+      "build-commands": [
+        "python2 setup.py install --prefix=/app --root=/ --optimize=1"
+      ],
+      "sources": [
+        {
+          "type": "archive",
+          "url": "http://trac.chirp.danplanet.com/chirp_daily/LATEST/chirp-daily-20170714.tar.gz",
+          "sha256": "9ebd201acda7abe826da190f2ab122beb70acb07636fe2dae1a0b80b58d5f4dd"
+        },
+        {
+          "type": "patch",
+          "path": "chirp-fix-setup.patch"
+        },
+        {
+          "type": "patch",
+          "path": "chirp-disable-reporting.patch"
+        },
+        {
+          "type": "patch",
+          "path": "chirp-desktop-entry.patch"
+        }
+      ],
+      "cleanup": ["/share/man"],
+      "modules": [
+        {
+          "name": "python2-pyserial",
+          "buildsystem": "simple",
+          "build-commands": [
+            "python2 setup.py install --prefix=/app --root=/ --optimize=1"
+          ],
+          "sources": [{
+            "type": "git",
+            "url": "https://github.com/pyserial/pyserial.git",
+            "branch": "v3.4",
+            "commit": "c54c81d933b847458d465cd77e96cd702ff2e7be"
+          }],
+          "post-install": [
+            "install -Dm644 LICENSE.txt /app/share/licenses/python2-pyserial/LICENSE"
+          ],
+          "cleanup": ["/bin/miniterm.py"]
+        },
+        {
+          "name": "python2-lxml",
+          "buildsystem": "simple",
+          "build-commands": [
+            "python2 setup.py build",
+            "python2 setup.py install --prefix=/app --root=/ --optimize=1"
+          ],
+          "build-options": {
+            "env": {
+              "XSLT_CONFIG": "pkg-config libxslt"
+            }
+          },
+          "sources": [{
+            "type": "archive",
+            "url": "https://pypi.io/packages/source/l/lxml/lxml-3.8.0.tar.gz",
+            "sha256": "736f72be15caad8116891eb6aa4a078b590d231fdc63818c40c21624ac71db96"
+          }],
+          "post-install": [
+            "install -Dm644 LICENSES.txt /app/share/licenses/python2-lxml/LICENSE",
+            "install -m644 doc/licenses/BSD.txt /app/share/licenses/python2-lxml/",
+            "install -m644 doc/licenses/elementtree.txt /app/share/licenses/python2-lxml/"
+          ]
+        },
+        {
+          "name": "python2-cairo",
+          "buildsystem": "simple",
+          "build-commands": [
+            "python2 setup.py install --skip-build --prefix=/app --root=/ --optimize=1"
+          ],
+          "sources": [{
+            "type": "git",
+            "url": "https://github.com/pygobject/pycairo.git",
+            "branch": "v1.14.0",
+            "commit": "6fa55284f74b2515f6f885dc7d4dce7f8bcc8bd7"
+          }],
+          "post-install": [
+            "install -Dm644 COPYING /app/share/licenses/python2-cairo/COPYING",
+            "install -m644 COPYING-MPL-1.1 /app/share/licenses/python2-cairo/"
+          ]
+        },
+        {
+          "name": "python2-gobject2",
+          "build-options": { "env": { "PYTHON": "python2" } },
+          "sources": [{
+            "type": "archive",
+            "url": "https://download.gnome.org/sources/pygobject/2.28/pygobject-2.28.6.tar.xz",
+            "sha256": "fb8a1d4f665130a125011659bd347c7339c944232163dbb9a34fd0686577adb8"
+          }],
+          "post-install": [
+            "install -Dm644 COPYING /app/share/licenses/python2-gobject2/COPYING"
+          ]
+        },
+        {
+          "name": "pygtk",
+          "sources": [{
+            "type": "archive",
+            "url": "https://download.gnome.org/sources/pygtk/2.24/pygtk-2.24.0.tar.bz2",
+            "sha256": "cd1c1ea265bd63ff669e92a2d3c2a88eb26bcd9e5363e0f82c896e649f206912"
+          }]
+        }
+      ]
+    }
+  ]
+}

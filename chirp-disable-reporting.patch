@@ -1,0 +1,19 @@
+Description: Disables all reporting
+ Prevent chirp from "phoning home" without informed consent. This also
+ has the nice side-effect of disabling the update nag screen, as chirp no
+ longer has a concept of releases upstream.
+Author: Iain R. Learmonth <irl@debian.org>
+Bug-Debian: https://bugs.debian.org/829494
+Last-Update: 2016-07-25
+
+--- chirp-20160717.orig/chirp/ui/reporting.py
++++ chirp-20160717/chirp/ui/reporting.py
+@@ -33,7 +33,7 @@ import logging
+ from chirp import CHIRP_VERSION, platform
+ 
+ REPORT_URL = "http://chirp.danplanet.com/report/report.php?do_report"
+-ENABLED = True
++ENABLED = False
+ THREAD_SEM = threading.Semaphore(10)  # Maximum number of outstanding threads
+ LAST = 0
+ LAST_TYPE = None
