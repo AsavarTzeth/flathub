@@ -5,7 +5,7 @@
      locale_files = []
      for f in _locale_files:
 -        locale_files.append(("share/chirp/%s" % os.path.dirname(f), [f]))
-+        locale_files.append(("share/%s" % os.path.dirname(f), [f]))
++        locale_files.append(("share/chirp/%s" % os.path.dirname(f), [f]))
  
      print "LOC: %s" % str(locale_files)
  
@@ -16,7 +16,7 @@
 -                    ('share/doc/chirp', ['COPYING']),
 -                    ('share/pixmaps', ['share/chirp.png']),
 +                    ('share/licenses/chirp', ['COPYING']),
-+                    ('share/icons/hicolor/scalable/apps', ['share/chirp.png']),
++                    ('share/pixmaps', ['share/chirp.png']),
                      ('share/man/man1', ["share/chirpw.1"]),
                      ('share/chirp/stock_configs', stock_configs),
                      ] + locale_files)

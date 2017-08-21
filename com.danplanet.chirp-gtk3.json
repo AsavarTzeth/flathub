@@ -10,7 +10,10 @@
     "--socket=wayland",
     "--socket=pulseaudio",
     /* X11 + XShm access */
-    "--share=ipc", "--socket=x11"
+    "--share=ipc", "--socket=x11",
+    "--persist=.chirp",
+    "--filesystem=home",
+    "--device=all"
   ],
   "cleanup": [
     "/include",
@@ -27,7 +30,7 @@
         {
           "type": "archive",
           "path": "/home/asavartzeth/Versionskontroll/Upstream Work/chirp.tar",
-          "sha256": "29897838fdfe8b107a9b4176b9a2a5cdd2b9b75c257bd873a8a79cbefe6050d6"
+          "sha256": "d949d45265cedc4f34152a254b6d682df4a317be9aeae931a638cc1cf46f2656"
         },
         {
           "type": "patch",
@@ -37,7 +40,14 @@
         {
           "type": "patch",
           "path": "chirp-disable-reporting.patch"
+        },
+        {
+          "type": "file",
+          "path": "chirp.svg"
         }
+      ],
+      "post-install": [
+        "install -Dm644 chirp.svg /app/share/icons/hicolor/scalable/apps/chirp.svg"
       ],
       "cleanup": ["/share/man"],
       "modules": [
@@ -85,7 +95,7 @@
           "name": "python2-cairo",
           "buildsystem": "simple",
           "build-commands": [
-            "python2 setup.py install --skip-build --prefix=/app --root=/ --optimize=1"
+            "python2 setup.py install --prefix=/app --root=/ --optimize=1"
           ],
           "sources": [{
             "type": "git",
