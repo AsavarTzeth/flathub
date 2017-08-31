@@ -1,0 +1,26 @@
+{
+  "name": "pyqt5",
+  "sources": [
+    {
+      "type": "archive",
+      "url": "https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.9/PyQt5_gpl-5.9.tar.gz",
+      "sha256": "ab0e7999cf202cc72962c78aefe461d16497b3c1a8282ab966ad90b6cb271096"
+    },
+    {
+      "type": "script",
+      "commands": [
+        "python3 configure.py \\",
+        "--confirm-license \\",
+        "--assume-shared \\",
+        "--no-designer-plugin \\",
+        "--no-docstrings \\",
+        "--no-tools \\",
+        "--no-qsci-api \\",
+        "--destdir=/app/lib/python3.5/site-packages \\",
+        "--stubsdir=/app/lib/python3.5/site-packages \\",
+        "--sipdir=/app/share/sip"
+      ],
+      "dest-filename": "configure"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "id": "net.hardcoded.dupeGuru",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "1.6",
+  "sdk": "org.freedesktop.Sdk",
+  "finish-args": [
+    "--socket=wayland",
+    "--socket=pulseaudio",
+    "--filesystem=home",
+    /* X11 + XShm access */
+    "--share=ipc", "--socket=x11"
+  ],
+  "cleanup": [
+    "/include",
+    "/lib/pkgconfig"
+  ],
+  "modules": [
+    {
+      "name": "dupeGuru",
+      "no-autogen": true,
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://download.hardcoded.net/dupeguru-src-4.0.3.tar.gz",
+          "sha256": "32564fc4227103cdfd50ba3338adc9ee776f2d6e401674b33050cc19257778b2",
+          "strip-components": 0
+        }
+      ],
+      "modules": [
+        "qt5-qtbase.json",
+        "qt5-pyqt.json",
+        {
+          "name": "python-polib",
+          "buildsystem": "simple",
+          "build-commands": [
+            "python3 setup.py --prefix=/app --root=/ --optimize=1"
+          ],
+          "sources": [{
+            "type": "archive",
+            "url": "https://pypi.python.org/packages/fb/64/ad3dbcc052d92fedd535a80b9866a9334afaf136cb5d89a673ac36d16b5a/polib-1.0.8.tar.gz",
+            "sha256": "5affe3d915eb5b4773f4ce164817e383eea0306115cdaf9b64008b3aea8202df"
+          }]
+        }
+      ]
+    }
+  ]
+}

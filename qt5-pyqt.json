@@ -1,0 +1,53 @@
+{
+  "name": "pyqt5",
+  "cleanup": [
+    "/bin"
+  ],
+  "sources": [
+    {
+      "type": "archive",
+      "url": "https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.9/PyQt5_gpl-5.9.tar.gz",
+      "sha256": "ab0e7999cf202cc72962c78aefe461d16497b3c1a8282ab966ad90b6cb271096"
+    },
+    {
+      "type": "script",
+      "commands": [
+        "python3 configure.py \\",
+        "--confirm-license \\",
+        "--assume-shared \\",
+        "--no-designer-plugin \\",
+        "--no-docstrings \\",
+        "--no-qsci-api \\",
+        "--bindir=/app/bin \\",
+        "--destdir=/app/lib/python3.5/site-packages \\",
+        "--stubsdir=/app/lib/python3.5/site-packages \\",
+        "--sipdir=/app/share/sip"
+      ],
+      "dest-filename": "configure"
+    }
+  ],
+  "modules": [
+    {
+      "name": "sip",
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://sourceforge.net/projects/pyqt/files/sip/sip-4.19.3/sip-4.19.3.tar.gz",
+          "sha256": "740df844f80cc45dcc9b23294a92492923bc403ce88e68c35783f27c177c4b74"
+        },
+        {
+          "type": "script",
+          "commands": [
+            "python3 configure.py \\",
+            "--bindir=/app/bin \\",
+            "--destdir=/app/lib/python3.5/site-packages \\",
+            "--incdir=/app/include \\",
+            "--pyidir=/app/lib/python3.5/site-packages \\",
+            "--sipdir=/app/share/sip"
+          ],
+          "dest-filename": "configure"
+        }
+      ]
+    }
+  ]
+}
