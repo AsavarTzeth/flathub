@@ -1,0 +1,42 @@
+{
+  "id": "org.gtk.Gtk3theme.Ambiant-MATE",
+  "branch": "3.22",
+  "runtime": "org.gnome.Sdk",
+  "build-extension": true,
+  "sdk": "org.gnome.Sdk",
+  "runtime-version": "3.24",
+  "appstream-compose": false,
+  "separate-locales": false,
+  "modules": [
+    {
+      "name": "ambiant-mate",
+      "buildsystem": "simple",
+      "build-commands": [
+        "install -dm755 usr/share/themes/Ambiant-MATE/gtk-3.0 /usr/share/runtime/share/themes/Ambiant-MATE/gtk-3.0",
+        "cp -a usr/share/themes/Ambiant-MATE/index.theme /usr/share/runtime/share/themes/Ambiant-MATE"
+      ],
+      "sources": [
+        {
+            "type": "archive",
+            "url": "https://launchpad.net/ubuntu/+archive/primary/+files/ubuntu-mate-artwork_0.4.7.tar.xz",
+            "sha256": "631b050b736e3f737d7cabd9596b622046650195e78bf8aae66f6fd094f3a23a"
+        }
+      ]
+    },
+    {
+      "name": "appdata",
+      "buildsystem": "simple",
+      "build-commands": [
+        "mkdir -p ${FLATPAK_DEST}/share/appdata",
+        "cp org.gtk.Gtk3theme.Ambiant-MATE.appdata.xml ${FLATPAK_DEST}/share/appdata",
+        "appstream-compose --basename=org.gtk.Gtk3theme.Ambiant-MATE --prefix=${FLATPAK_DEST} --origin=flatpak org.gtk.Gtk3theme.Ambiant-MATE"
+      ],
+      "sources": [
+        {
+          "type": "file",
+          "path": "org.gtk.Gtk3theme.Ambiant-MATE.appdata.xml"
+        }
+      ]
+  }
+  ]
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="runtime">
+  <id>org.gtk.Gtk3theme.Ambiant-MATE</id>
+  <metadata_license>GPL3</metadata_license>
+  <name>Ambiant MATE Gtk theme</name>
+  <summary>Ambiant MATE Gtk theme used by Ubuntu MATE</summary>
+  <description>
+    <p>Default Ubuntu MATE theme.</p>
+  </description>
+  <url type="homepage">https://launchpad.net/ubuntu-mate</url>
+</component>
