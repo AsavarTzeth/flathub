@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2017 Patrik Nilsson -->
+<component type="desktop">
+  <id>com.ugetdm.uget.desktop</id>
+  <name>uGet</name>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LGPL-2.1</project_license>
+  <summary>Download multiple URLs and apply it to one of setting/queue</summary>
+  <developer_name>Michael Tunnell</developer_name>
+  <description>
+    <p>
+      PulseEffects is an advanced audio manipulation tools. It includes an
+      equalizer, limiter, compressor and a reverberation tool, just to mention
+      a few. To complement this there is also a built in spectrum analyzer.
+    </p>
+    <p>
+      Because PulseEffects uses the default PulseAudio sound server it will
+      work with most, if not all, applications you use. All supported
+      applications are presented in the main window, where each can be enabled
+      individually.
+    </p>
+    <p>
+      Besides manipulating sound output, PulseEffects is able to apply effects
+      to an input device, such as a microphone. This is, for example, useful in
+      audio recording, but it also works well during voice conversations.
+    </p>
+    <p>
+      When PulseEffects is launched it will conveniently remember the
+      configuration used in the last session. It is also possible to save
+      all the current settings as profiles.
+    </p>
+  </description>
+  <url type="homepage">http://ugetdm.com</url>
+  <url type="bugtracker">http://ugetdm.com/forum/viewforum.php?f=6</url>
+  <url type="faq">http://ugetdm.com/help/faqs</url>
+  <url type="help">http://ugetdm.com/help</url>
+  <url type="donation">http://ugetdm.com/donate</url>
+  <url type="translate">http://ugetdm.com/contribute/translations</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>http://ugetdm.com/images/screens/showcase/linux-mint-1.10.4-screen.gif</image>
+      <caption></caption>
+    </screenshot>
+  </screenshots>
+  <update_contact>contact_AT_hembas.se</update_contact>
+  <translation type="gettext">uget</translation>
+</component>
