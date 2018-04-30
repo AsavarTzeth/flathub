@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2018 Patrik Nilsson <contact_AT_hembas.se> -->
+<component type="desktop-application">
+ <id>au.com.glassechidna.heimdall.desktop</id>
+ <metadata_license>CC0-1.0</metadata_license>
+ <project_license>MIT</project_license>
+ <name>Heimdall</name>
+ <summary>Flash firmware onto Samsung mobile devices</summary>
+
+ <description>
+   <p>
+     Heimdall is a cross-platform open-source tool suite, used to flash
+     firmware (aka ROMs) onto Samsung mobile devices. It is an alternative
+     to the official, but proprietary Odin utility.
+   </p>
+   <p>
+     Assuming a mobile device is put into "Download Mode" (also known as
+     "Odin Mode"), Heimdall will connect to the device over USB. This should
+     work with most devices, but there is no guarentee that it will.
+   </p>
+   <p>
+     Flashing operations are irreversable and may invalidate a device's
+     waranties. Use this tool at your own risk.
+   </p>
+   <p>
+     Heimdall is maintained and predominantly developed by Glass Echidna, a
+     tiny independent software development company.
+   </p>
+ </description>
+
+ <launchable type="desktop-id">au.com.glassechidna.heimdall.desktop</launchable>
+
+ <screenshots>
+   <screenshot type="default">
+     <image>https://raw.githubusercontent.com/AsavarTzeth/flathub/au.com.glassechidna.heimdall/appdata-screenshot-01.png</image>
+     <caption>Load Firmware Package Tab</caption>
+   </screenshot>
+   <screenshot>
+     <image>https://raw.githubusercontent.com/AsavarTzeth/flathub/au.com.glassechidna.heimdall/appdata-screenshot-02.png</image>
+     <caption>Firmware Flashing Tab</caption>
+   </screenshot>
+   <screenshot>
+     <image>https://raw.githubusercontent.com/AsavarTzeth/flathub/au.com.glassechidna.heimdall/appdata-screenshot-03.png</image>
+     <caption>Utilities Tab</caption>
+   </screenshot>
+ </screenshots>
+
+ <url type="homepage">https://glassechidna.com.au/heimdall/</url>
+ <url type="bugtracker">https://github.com/Benjamin-Dobell/Heimdall/issues</url>
+ <url type="faq">https://glassechidna.com.au/heimdall/</url>
+ <url type="donation">https://www.glassechidna.com.au/donate/</url>
+
+ <provides>
+   <binary>heimdall</binary>
+   <binary>heimdall-frontend</binary>
+ </provides>
+
+  <releases>
+    <release version="v1.4.2" date="2017-05-11"></release>
+    <release version="v1.4.1" date="2014-06-01"></release>
+    <release version="v1.4.0" date="2013-06-08"></release>
+    <release version="v1.3.2" date="2012-03-31"></release>
+    <release version="v1.3.1" date="2011-09-12"></release>
+    <release version="v1.3.0" date="2011-07-27"></release>
+    <release version="v1.1.1" date="2010-11-27"></release>
+  </releases>
+
+ <update_contact>contact_AT_hembas.se</update_contact>
+</component>

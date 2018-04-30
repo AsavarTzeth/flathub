@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Heimdall
+GenericName=ROM flashing tool
+Comment=Flash firmware onto Samsung mobile devices
+Icon=au.com.glassechidna.heimdall
+Exec=heimdall-frontend
+Terminal=false
+Categories=Qt;Development;
+Keywords=android,firmware,flash,mobile,rom,samsung
