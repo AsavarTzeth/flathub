@@ -1,0 +1,74 @@
+id: com.onlyoffice.desktop
+runtime: org.kde.Platform
+runtime-version: 5.10
+sdk: org.kde.Sdk
+#base: io.atom.electron.BaseApp
+#base-version: stable
+command: com.onlyoffice.desktopeditors
+rename-desktop-file: desktopeditors
+finish-args:
+  # X11 + XShm access
+  - --share=ipc
+  - --socket=x11
+  # Wayland access
+  - --socket=wayland
+  # Access user files
+  - --filesystem=home
+  # Dconf access
+  - --filesystem=xdg-run/dconf
+  - --filesystem=~/.config/dconf:ro
+  - --talk-name=ca.desrt.dconf
+  - --env=DCONF_USER_CONFIG_DIR=.config/dconf
+  # Notification access
+  - --talk-name=org.freedesktop.Notifications
+build-options:
+  cflags: -O2 -g
+  env: { V: '1' }
+cleanup:
+  - '*.a'
+  - '*.h'
+  - '*.la'
+  - /include
+  - /lib/pkgconfig
+modules:
+  - name: onlyoffice
+    no-autogen: true
+    make-args:
+      - -C
+      - desktop-apps
+    sources:
+      - type: git
+        url: 'https://github.com/ONLYOFFICE/DesktopEditors.git'
+        tag: ONLYOFFICE-DesktopEditors-4.8.7
+        commit: 83a0de4d69dad0b7b1b22c205df379a9f5cc142d
+    post-install:
+      - install -Dm644 -t /app/share/licenses/com.onlyoffice.desktopeditors LICENSE
+    modules:
+      - shared-modules/glu/glu-9.0.0.json
+
+      - name: gtk2
+        config-opts:
+          - --disable-man
+          - --with-xinput=xfree
+        cleanup: [ '*' ]
+        sources:
+          - type: git
+            url: 'https://gitlab.gnome.org/GNOME/gtk.git'
+            branch: gtk-2-24
+
+      - name: gtkglext
+        sources:
+          - type: git
+            url: 'https://git.gnome.org/browse/gtkglext.git'
+            commit: 848578a45f2a35e498e7b8b5382645e380da92a9
+          - type: script
+            dest-filename: autogen.sh
+            commands:
+              - cp -p /usr/share/automake-*/config.{sub,guess} build-aux
+              - autoreconf -vfi
+        modules:
+          - name: pangox-compat
+            sources:
+              - type: git
+                url: 'https://git.gnome.org/browse/pangox-compat'
+                commit: a1f90856995a572de559c9044b277dcdda7957f9
