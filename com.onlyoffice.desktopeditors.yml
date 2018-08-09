@@ -1,4 +1,4 @@
-id: com.onlyoffice.desktop
+id: com.onlyoffice.desktopeditors
 runtime: org.kde.Platform
 runtime-version: 5.10
 sdk: org.kde.Sdk
@@ -31,44 +31,56 @@ cleanup:
   - /include
   - /lib/pkgconfig
 modules:
-  - name: onlyoffice
+  - name: onlyoffice-core
     no-autogen: true
-    make-args:
-      - -C
-      - desktop-apps
+    buildsystem: simple
+    build-options:
+      env:
+        PREFIX: /app
+    build-commands:
+      - make
     sources:
       - type: git
-        url: 'https://github.com/ONLYOFFICE/DesktopEditors.git'
-        tag: ONLYOFFICE-DesktopEditors-4.8.7
-        commit: 83a0de4d69dad0b7b1b22c205df379a9f5cc142d
-    post-install:
-      - install -Dm644 -t /app/share/licenses/com.onlyoffice.desktopeditors LICENSE
-    modules:
-      - shared-modules/glu/glu-9.0.0.json
+        url: 'https://github.com/ONLYOFFICE/core.git'
+        commit: 29e3f90ebfc4ff7666363af58b906df582a698a2
+      - type: patch
+        path: patch/onlyoffice/0001-Fix-buildsystem.patch
 
-      - name: gtk2
-        config-opts:
-          - --disable-man
-          - --with-xinput=xfree
-        cleanup: [ '*' ]
-        sources:
-          - type: git
-            url: 'https://gitlab.gnome.org/GNOME/gtk.git'
-            branch: gtk-2-24
+      # TODO UnicodeConverter probably is not built. Modifying path is not the
+      # answer because it is not installed yet (due to patches). It should be found
+      # within its build dir.
 
-      - name: gtkglext
-        sources:
-          - type: git
-            url: 'https://git.gnome.org/browse/gtkglext.git'
-            commit: 848578a45f2a35e498e7b8b5382645e380da92a9
-          - type: script
-            dest-filename: autogen.sh
-            commands:
-              - cp -p /usr/share/automake-*/config.{sub,guess} build-aux
-              - autoreconf -vfi
-        modules:
-          - name: pangox-compat
-            sources:
-              - type: git
-                url: 'https://git.gnome.org/browse/pangox-compat'
-                commit: a1f90856995a572de559c9044b277dcdda7957f9
+      # REMEMBER /usr/bin/python is now python2, to simply pass v8!
+
+      # Build dependencies found via contents of .travis.yml and build scripts
+      # located in Common/3rdParty. All modules can be found inside subdirs here.
+      # Downloading sources is done with fetch.sh and builds are done with build.sh
+
+      # Re-runs use existing builds. Re-run to show the order of the modules.
+
+      # Order:
+      # 1. boost
+      # 2. cryptopp (nothing done?)
+      # 3. curl (nothing done?)
+      # 4. cef
+      # 5. icu (in runtime (newer version though))
+      # 6. openssl (in runtime (must be used))
+      # 7. pole (nothing done?, since there is no build.sh)
+      # 8. v8 (python build scripts assumes /usr/bin/env python is python2)
+
+      # TODO Try fixing link paths without patches. Maybe create link to /app/lib/include in
+      # Common/3rdParty/$module ?
+
+      # TODO Try to override ld path using custom build commands, specifying LD_LIBRARY_PATH
+      # Although it seems the makefiles ignores this.
+
+      # TODO If all else fails patch make files to use correct ld path, preferably as an option?
+
+      # date_time, filesystem, regex, system, 1.58
+
+      # cef_binary Chromium Embedded Framework (would need to be an extension or extra data)
+      # http://d2ettrnqo7v976.cloudfront.net
+
+      # v8 (Chromium V8 engine)
+      # https://chromium.googlesource.com/chromium/tools/depot_tools.git
+      # 6.0
