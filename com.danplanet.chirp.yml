@@ -29,9 +29,19 @@ modules:
       - type: archive
         url: 'https://trac.chirp.danplanet.com/chirp_daily/LATEST/chirp-daily-20180811.tar.gz'
         sha256: c536994f594277ccd7016fe69bef13ec660c215982b4a148d52fe876acf0f9f4
+      - type: patch
+        path: patch/chirp/0001-Fix-issues-with-setup.py-installation-paths.patch
+      - type: patch
+        path: patch/chirp/0002-Add-support-for-xdg-base-directories.patch
+      - type: file
+        dest-filename: share/chirp.svg
+        url: https://chirp.danplanet.com/projects/chirp/repository/revisions/85b213f6d01a/raw/share/chirp.svg
+        sha512: de77ecd0acd54af2e97932213a087470f6bfa2a26a1c40ef5ac703fb5df521d1c3090689c516dc56f5864729d1175baff495ab19f9a55be416d0168f2c56bfa6
     cleanup:
       - /bin/rpttool
       - /share/man
+    post-install:
+      - install -Dm644 -t /app/share/icons/hicolor/scalable/apps share/chirp.svg
     modules:
 
       - name: python2-pyserial

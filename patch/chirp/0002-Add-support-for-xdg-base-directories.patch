@@ -1,0 +1,96 @@
+From 2fe434a1d497c8a41354819e7c4f9fe819b9e43e Mon Sep 17 00:00:00 2001
+From: AsavarTzeth <asavartzeth@gmail.com>
+Date: Sun, 12 Aug 2018 21:14:52 +0200
+Subject: [PATCH 2/3] Add support for xdg base directories
+
+Modern Linux distributions use the XDG Base Directory Specification,
+which decides where various files should be stored. It is possible to
+respect this specification by using glib (GLib).
+
+This adds glib as a new dependency, however it should already be installed
+as a part of pygobject 2.28.x, unless a distribution splits upstream
+packages.
+
+Example of where files are now stored on a typical Linux desktop:
+
+- Configs: ~/.config/chirp/
+- Data: ~/.local/share/chirp/
+
+Example of where this differs with FLatpak, but still works thanks to
+this commit:
+
+- Configs: ~/.var/app/com.danplanet.chirp/config/chirp/
+- Data: ~/.var/app/com.danplanet.chirp/data/chirp/
+---
+ chirp/platform.py   | 17 +++++++++++++++--
+ chirp/ui/mainapp.py |  2 +-
+ 2 files changed, 16 insertions(+), 3 deletions(-)
+
+diff --git a/chirp/platform.py b/chirp/platform.py
+index 485874d..c0ef12c 100644
+--- a/chirp/platform.py
++++ b/chirp/platform.py
+@@ -15,6 +15,7 @@
+ 
+ import os
+ import sys
++import glib
+ import glob
+ import re
+ import logging
+@@ -88,11 +89,21 @@ class Platform:
+ 
+     def config_dir(self):
+         """Return the preferred configuration file directory"""
+-        return self._base
++        if sys.platform.startswith("linux"):
++            return os.path.join(glib.get_user_config_dir(),"chirp")
++        else:
++            return self._base
++
++    def data_dir(self):
++        """Return the preferred data file directory"""
++        if sys.platform.startswith("linux"):
++            return os.path.join(glib.get_user_data_dir(),"chirp")
++        else:
++            return self._base
+ 
+     def log_dir(self):
+         """Return the preferred log file directory"""
+-        logdir = os.path.join(self.config_dir(), "logs")
++        logdir = os.path.join(self.data_dir(), "logs")
+         if not os.path.isdir(logdir):
+             os.mkdir(logdir)
+ 
+@@ -275,6 +286,7 @@ def _unix_editor():
+ class UnixPlatform(Platform):
+     """A platform module suitable for UNIX systems"""
+     def __init__(self, basepath):
++
+         if not basepath:
+             basepath = os.path.abspath(os.path.join(self.default_dir(),
+                                                     ".chirp"))
+@@ -478,6 +490,7 @@ def _do_test():
+     __pform = get_platform()
+ 
+     print "Config dir: %s" % __pform.config_dir()
++    print "Data dir: %s" % __pform.data_dir()
+     print "Default dir: %s" % __pform.default_dir()
+     print "Log file (foo): %s" % __pform.log_file("foo")
+     print "Serial ports: %s" % __pform.list_serial_ports()
+diff --git a/chirp/ui/mainapp.py b/chirp/ui/mainapp.py
+index 72ba71e..c814d13 100644
+--- a/chirp/ui/mainapp.py
++++ b/chirp/ui/mainapp.py
+@@ -565,7 +565,7 @@ of file.
+         stock_dir = platform.get_platform().config_file("stock_configs")
+         if not os.path.isdir(stock_dir):
+             try:
+-                os.mkdir(stock_dir)
++                os.makedirs(stock_dir)
+             except Exception, e:
+                 LOG.error("Unable to create directory: %s" % stock_dir)
+                 return
+-- 
+2.18.0
+
