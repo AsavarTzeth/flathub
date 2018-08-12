@@ -1,0 +1,45 @@
+From aa2f2e91b467a3a0776c4749d1b01e20e1f567c7 Mon Sep 17 00:00:00 2001
+From: AsavarTzeth <asavartzeth@gmail.com>
+Date: Thu, 9 Aug 2018 18:08:35 +0200
+Subject: [PATCH] Add flatpak portal support
+
+---
+ src/gtk/dirdlg.cpp  | 4 ++++
+ src/gtk/filedlg.cpp | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/src/gtk/dirdlg.cpp b/src/gtk/dirdlg.cpp
+index 04e9401c68..11227a13d6 100644
+--- a/src/gtk/dirdlg.cpp
++++ b/src/gtk/dirdlg.cpp
+@@ -85,7 +85,11 @@ bool wxDirDialog::Create(wxWindow* parent,
+     if (parent)
+         gtk_parent = GTK_WINDOW( gtk_widget_get_toplevel(parent->m_widget) );
+ 
++#if defined(__WXGTK3__) && GTK_CHECK_VERSION(3,20,0)
++    m_widget = gtk_file_chooser_native_new(
++#else
+     m_widget = gtk_file_chooser_dialog_new(
++#endif // GTK >= 3.20 / < 3.20
+                    wxGTK_CONV(m_message),
+                    gtk_parent,
+                    GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+diff --git a/src/gtk/filedlg.cpp b/src/gtk/filedlg.cpp
+index 7aa39cdfb3..81e1ad0edc 100644
+--- a/src/gtk/filedlg.cpp
++++ b/src/gtk/filedlg.cpp
+@@ -233,7 +233,11 @@ bool wxFileDialog::Create(wxWindow *parent, const wxString& message,
+ #endif // GTK >= 3.10 / < 3.10
+     }
+ 
++#if defined(__WXGTK3__) && GTK_CHECK_VERSION(3,20,0)
++    m_widget = gtk_file_chooser_native_new(
++#else
+     m_widget = gtk_file_chooser_dialog_new(
++#endif
+                    wxGTK_CONV(m_message),
+                    gtk_parent,
+                    gtk_action,
+-- 
+2.18.0
+
