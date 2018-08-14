@@ -1,0 +1,48 @@
+From 1dc7833887ce4aac8d7e7a1780b5b0f0d1a461a2 Mon Sep 17 00:00:00 2001
+From: AsavarTzeth <asavartzeth@gmail.com>
+Date: Tue, 14 Aug 2018 11:10:20 +0200
+Subject: [PATCH 2/2] Fix xdg base directories gtk3 support
+
+---
+ chirp/platform.py | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/chirp/platform.py b/chirp/platform.py
+index 9d516ff..7fe47cc 100644
+--- a/chirp/platform.py
++++ b/chirp/platform.py
+@@ -15,10 +15,13 @@
+ 
+ import os
+ import sys
+-import glib
+ import glob
+ import re
+ import logging
++
++import gi
++from gi.repository import GLib
++
+ from subprocess import Popen
+ 
+ LOG = logging.getLogger(__name__)
+@@ -90,14 +93,14 @@ class Platform:
+     def config_dir(self):
+         """Return the preferred configuration file directory"""
+         if sys.platform.startswith("linux"):
+-            return os.path.join(glib.get_user_config_dir(),"chirp")
++            return os.path.join(GLib.get_user_config_dir(),"chirp")
+         else:
+             return self._base
+ 
+     def data_dir(self):
+         """Return the preferred data file directory"""
+         if sys.platform.startswith("linux"):
+-            return os.path.join(glib.get_user_data_dir(),"chirp")
++            return os.path.join(GLib.get_user_data_dir(),"chirp")
+         else:
+             return self._base
+ 
+-- 
+2.18.0
+

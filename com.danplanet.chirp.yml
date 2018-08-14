@@ -1,4 +1,5 @@
 id: com.danplanet.chirp
+branch: gtk3
 runtime: org.gnome.Platform
 runtime-version: 3.28
 sdk: org.gnome.Sdk
@@ -33,6 +34,10 @@ modules:
         path: patch/chirp/0001-Fix-issues-with-setup.py-installation-paths.patch
       - type: patch
         path: patch/chirp/0002-Add-support-for-xdg-base-directories.patch
+      - type: patch
+        path: patch/chirp/0001-Initial-work-towards-GTK3.patch
+      - type: patch
+        path: patch/chirp/0002-Fix-xdg-base-directories-gtk3-support.patch
       - type: file
         dest-filename: share/chirp.svg
         url: https://chirp.danplanet.com/projects/chirp/repository/revisions/85b213f6d01a/raw/share/chirp.svg
@@ -87,30 +92,16 @@ modules:
         post-install:
           - install -Dm644 -t /app/share/licenses/python2-cairo COPYING COPYING-MPL-1.1
 
-      - name: python2-gobject2
+      - name: python2-gobject
         build-options:
           env:
             PYTHON: python2
         sources:
           - type: archive
-            url: 'https://download.gnome.org/sources/pygobject/2.28/pygobject-2.28.7.tar.xz'
-            sha256: bb9d25a3442ca7511385a7c01b057492095c263784ef31231ffe589d83a96a5a
+            url: 'https://download.gnome.org/sources/pygobject/3.28/pygobject-3.28.3.tar.xz'
+            sha256: 3dd3e21015d06e00482ea665fc1733b77e754a6ab656a5db5d7f7bfaf31ad0b0
         post-install:
-          - install -Dm644 -t /app/share/licenses/python2-gobject2 COPYING
+          - install -Dm644 -t /app/share/licenses/python2-gobject COPYING
         cleanup:
           - /bin
-          - /share/gtk-doc
-
-      - name: pygtk
-        config-opts:
-          - --without-glade
-        sources:
-          - type: archive
-            url: 'https://download.gnome.org/sources/pygtk/2.24/pygtk-2.24.0.tar.bz2'
-            sha256: cd1c1ea265bd63ff669e92a2d3c2a88eb26bcd9e5363e0f82c896e649f206912
-        post-install:
-          - install -Dm644 -t /app/share/licenses/pygtk COPYING
-        cleanup:
-          - /bin
-          - /lib/pygtk/demos
           - /share/gtk-doc

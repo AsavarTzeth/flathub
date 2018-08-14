@@ -1,0 +1,2240 @@
+From 453a22dc313939a92422f27668312c94f6ca8da2 Mon Sep 17 00:00:00 2001
+From: AsavarTzeth <asavartzeth@gmail.com>
+Date: Tue, 14 Aug 2018 09:56:06 +0200
+Subject: [PATCH 1/2] Initial work towards GTK3
+
+All modules are now ported to use pygtkcompat and GObject with the
+exception of mainapp which is fully ported.
+
+Details on mainapp module:
+- Subtitute a lot of lines with pygi-convery.sh script
+- Stub out a function that seem unused
+- Remove url hook that seem redundant (needs cross-platform testing)
+- Remove PyGTK from about dialog
+- Add GTK3 version to about dialog
+- Use program_name instead of name in about dialog
+---
+ chirp/platform.py        |   5 +
+ chirp/ui/bandplans.py    |   9 +-
+ chirp/ui/bankedit.py     |  19 ++-
+ chirp/ui/clone.py        |  16 ++-
+ chirp/ui/cloneprog.py    |   5 +
+ chirp/ui/common.py       |  90 ++++++-------
+ chirp/ui/dstaredit.py    |  19 ++-
+ chirp/ui/editorset.py    |  35 +++--
+ chirp/ui/importdialog.py |  47 ++++---
+ chirp/ui/inputdialog.py  |  71 +++++-----
+ chirp/ui/mainapp.py      | 283 ++++++++++++++++++++-------------------
+ chirp/ui/memdetail.py    |   8 +-
+ chirp/ui/memedit.py      |  23 ++--
+ chirp/ui/miscwidgets.py  | 162 +++++++++++-----------
+ chirp/ui/radiobrowser.py |  13 +-
+ chirp/ui/settingsedit.py |  15 ++-
+ chirp/ui/shiftdialog.py  |  17 ++-
+ chirpw                   |  10 ++
+ 18 files changed, 477 insertions(+), 370 deletions(-)
+
+diff --git a/chirp/platform.py b/chirp/platform.py
+index c0ef12c..9d516ff 100644
+--- a/chirp/platform.py
++++ b/chirp/platform.py
+@@ -141,6 +141,11 @@ class Platform:
+ 
+     def gui_open_file(self, start_dir=None, types=[]):
+         """Prompt the user to pick a file to open"""
++        # Compatibility Layer (temporary)
++        from gi import pygtkcompat
++        pygtkcompat.enable()
++        pygtkcompat.enable_gtk(version='3.0')
++
+         import gtk
+ 
+         if not start_dir:
+diff --git a/chirp/ui/bandplans.py b/chirp/ui/bandplans.py
+index 483261c..900ce4f 100644
+--- a/chirp/ui/bandplans.py
++++ b/chirp/ui/bandplans.py
+@@ -13,8 +13,15 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+ import logging
++
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
+ from chirp import bandplan, bandplan_na, bandplan_au
+ from chirp import bandplan_iaru_r1, bandplan_iaru_r2, bandplan_iaru_r3
+ from chirp.ui import inputdialog
+diff --git a/chirp/ui/bankedit.py b/chirp/ui/bankedit.py
+index 48d4b4f..c090fc1 100644
+--- a/chirp/ui/bankedit.py
++++ b/chirp/ui/bankedit.py
+@@ -13,11 +13,18 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+-import gobject
+ import time
+ import logging
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
++from gi.repository import GObject
++
+ from gobject import TYPE_INT, TYPE_STRING, TYPE_BOOLEAN
+ 
+ from chirp import chirp_common
+@@ -39,7 +46,7 @@ class MappingNamesJob(common.RadioJob):
+         for mapping in mappings:
+             self.__editor.mappings.append((mapping, mapping.get_name()))
+ 
+-        gobject.idle_add(self.cb, *self.cb_args)
++        GObject.idle_add(self.cb, *self.cb_args)
+ 
+ 
+ class MappingNameEditor(common.Editor):
+@@ -88,9 +95,9 @@ class MappingNameEditor(common.Editor):
+         self._model = model
+         self._type = common.unpluralize(model.get_name())
+ 
+-        types = [(gobject.TYPE_STRING, "key"),
+-                 (gobject.TYPE_STRING, self._type),
+-                 (gobject.TYPE_STRING, _("Name"))]
++        types = [(GObject.TYPE_STRING, "key"),
++                 (GObject.TYPE_STRING, self._type),
++                 (GObject.TYPE_STRING, _("Name"))]
+ 
+         self.listw = miscwidgets.KeyedListWidget(types)
+         self.listw.set_editable(1, True)
+diff --git a/chirp/ui/clone.py b/chirp/ui/clone.py
+index 7245537..1372017 100644
+--- a/chirp/ui/clone.py
++++ b/chirp/ui/clone.py
+@@ -18,8 +18,14 @@ import threading
+ import logging
+ import os
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
+ import gtk
+-import gobject
++
++from gi.repository import GObject
+ 
+ from chirp import platform, directory, detect, chirp_common
+ from chirp.ui import miscwidgets, cloneprog, inputdialog, common, config
+@@ -226,7 +232,7 @@ class CloneCancelledException(Exception):
+ 
+ class CloneThread(threading.Thread):
+     def __status(self, status):
+-        gobject.idle_add(self.__progw.status, status)
++        GObject.idle_add(self.__progw.status, status)
+ 
+     def __init__(self, radio, direction, cb=None, parent=None):
+         threading.Thread.__init__(self)
+@@ -245,7 +251,7 @@ class CloneThread(threading.Thread):
+     def run(self):
+         LOG.debug("Clone thread started")
+ 
+-        gobject.idle_add(self.__progw.show)
++        GObject.idle_add(self.__progw.show)
+ 
+         self.__radio.status_fn = self.__status
+ 
+@@ -261,7 +267,7 @@ class CloneThread(threading.Thread):
+             LOG.error(_("Clone failed: {error}").format(error=e))
+             emsg = e
+ 
+-        gobject.idle_add(self.__progw.hide)
++        GObject.idle_add(self.__progw.hide)
+ 
+         # NB: Compulsory close of the radio's serial connection
+         self.__radio.pipe.close()
+@@ -269,7 +275,7 @@ class CloneThread(threading.Thread):
+         LOG.debug("Clone thread ended")
+ 
+         if self.__cback and not self.__cancelled:
+-            gobject.idle_add(self.__cback, self.__radio, emsg)
++            GObject.idle_add(self.__cback, self.__radio, emsg)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/chirp/ui/cloneprog.py b/chirp/ui/cloneprog.py
+index 99beea9..8cd751a 100644
+--- a/chirp/ui/cloneprog.py
++++ b/chirp/ui/cloneprog.py
+@@ -13,6 +13,11 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
+ import gtk
+ 
+ 
+diff --git a/chirp/ui/common.py b/chirp/ui/common.py
+index dc611b3..f61ddee 100644
+--- a/chirp/ui/common.py
++++ b/chirp/ui/common.py
+@@ -13,16 +13,16 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+-import gobject
+-import pango
+-
+ import threading
+ import time
+ import os
+ import traceback
+ import logging
+ 
++from gi.repository import Gtk
++from gi.repository import GObject
++from gi.repository import Pango
++
+ from chirp import errors
+ from chirp.ui import reporting, config
+ 
+@@ -31,17 +31,17 @@ LOG = logging.getLogger(__name__)
+ CONF = config.get()
+ 
+ 
+-class Editor(gobject.GObject):
++class Editor(GObject.GObject):
+     __gsignals__ = {
+-        'changed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+-        'usermsg': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+-                    (gobject.TYPE_STRING,)),
++        'changed': (GObject.SignalFlags.RUN_LAST, None, ()),
++        'usermsg': (GObject.SignalFlags.RUN_LAST, None,
++                    (GObject.TYPE_STRING,)),
+         }
+ 
+     root = None
+ 
+     def __init__(self, rthread):
+-        gobject.GObject.__init__(self)
++        GObject.GObject.__init__(self)
+         self.read_only = False
+         self._focused = False
+         self.rthread = rthread
+@@ -76,7 +76,7 @@ class Editor(gobject.GObject):
+     def other_editor_changed(self, editor):
+         pass
+ 
+-gobject.type_register(Editor)
++GObject.type_register(Editor)
+ 
+ 
+ def DBG(*args):
+@@ -126,7 +126,7 @@ class RadioJob:
+             result = e
+ 
+         if self.cb:
+-            gobject.idle_add(self.cb, result, *self.cb_args)
++            GObject.idle_add(self.cb, result, *self.cb_args)
+ 
+     def execute(self, radio):
+         if not self.target:
+@@ -142,15 +142,15 @@ class RadioJob:
+         self._execute(self.target, func)
+ 
+ 
+-class RadioThread(threading.Thread, gobject.GObject):
++class RadioThread(threading.Thread, GObject.GObject):
+     __gsignals__ = {
+-        "status": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+-                   (gobject.TYPE_STRING,)),
++        "status": (GObject.SignalFlags.RUN_LAST, None,
++                   (GObject.TYPE_STRING,)),
+         }
+ 
+     def __init__(self, radio, parent=None):
+         threading.Thread.__init__(self)
+-        gobject.GObject.__init__(self)
++        GObject.GObject.__init__(self)
+         self.__queue = {}
+         if parent:
+             self.__runlock = parent._get_run_lock()
+@@ -230,7 +230,7 @@ class RadioThread(threading.Thread, gobject.GObject):
+         jobs = 0
+         for i in dict(self.__queue):
+                 jobs += len(self.__queue[i])
+-        gobject.idle_add(self.emit, "status", "[%i] %s" % (jobs, msg))
++        GObject.idle_add(self.emit, "status", "[%i] %s" % (jobs, msg))
+ 
+     def _queue_pop(self, priority):
+         try:
+@@ -277,29 +277,29 @@ def log_exception():
+ 
+ 
+ def show_error(msg, parent=None):
+-    d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, parent=parent,
+-                          type=gtk.MESSAGE_ERROR)
++    d = Gtk.MessageDialog(buttons=Gtk.ButtonsType.OK, parent=parent,
++                          type=Gtk.MessageType.ERROR)
+     d.set_property("text", msg)
+ 
+     if not parent:
+-        d.set_position(gtk.WIN_POS_CENTER_ALWAYS)
++        d.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+ 
+     d.run()
+     d.destroy()
+ 
+ 
+ def ask_yesno_question(msg, parent=None):
+-    d = gtk.MessageDialog(buttons=gtk.BUTTONS_YES_NO, parent=parent,
+-                          type=gtk.MESSAGE_QUESTION)
++    d = Gtk.MessageDialog(buttons=Gtk.ButtonsType.YES_NO, parent=parent,
++                          type=Gtk.MessageType.QUESTION)
+     d.set_property("text", msg)
+ 
+     if not parent:
+-        d.set_position(gtk.WIN_POS_CENTER_ALWAYS)
++        d.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+ 
+     r = d.run()
+     d.destroy()
+ 
+-    return r == gtk.RESPONSE_YES
++    return r == Gtk.ResponseType.YES
+ 
+ 
+ def combo_select(box, value):
+@@ -315,12 +315,12 @@ def combo_select(box, value):
+ 
+ 
+ def _add_text(d, text):
+-    v = gtk.TextView()
++    v = Gtk.TextView()
+     v.get_buffer().set_text(text)
+     v.set_editable(False)
+     v.set_cursor_visible(False)
+     v.show()
+-    sw = gtk.ScrolledWindow()
++    sw = Gtk.ScrolledWindow()
+     sw.add(v)
+     sw.show()
+     d.vbox.pack_start(sw, 1, 1, 1)
+@@ -328,13 +328,13 @@ def _add_text(d, text):
+ 
+ 
+ def show_error_text(msg, text, parent=None):
+-    d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, parent=parent,
+-                          type=gtk.MESSAGE_ERROR)
++    d = Gtk.MessageDialog(buttons=Gtk.ButtonsType.OK, parent=parent,
++                          type=Gtk.MessageType.ERROR)
+     d.set_property("text", msg)
+ 
+     _add_text(d, text)
+     if not parent:
+-        d.set_position(gtk.WIN_POS_CENTER_ALWAYS)
++        d.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+ 
+     d.set_size_request(600, 400)
+     d.run()
+@@ -345,25 +345,25 @@ def show_warning(msg, text,
+                  parent=None, buttons=None, title="Warning",
+                  can_squelch=False):
+     if buttons is None:
+-        buttons = gtk.BUTTONS_OK
+-    d = gtk.MessageDialog(buttons=buttons,
++        buttons = Gtk.ButtonsType.OK
++    d = Gtk.MessageDialog(buttons=buttons,
+                           parent=parent,
+-                          type=gtk.MESSAGE_WARNING)
++                          type=Gtk.MessageType.WARNING)
+     d.set_title(title)
+     d.set_property("text", msg)
+-    l = gtk.Label(_("Details") + ":")
++    l = Gtk.Label(label=_("Details") + ":")
+     l.show()
+     d.vbox.pack_start(l, 0, 0, 0)
+-    l = gtk.Label(_("Proceed?"))
++    l = Gtk.Label(label=_("Proceed?"))
+     l.show()
+     d.get_action_area().pack_start(l, 0, 0, 0)
+     d.get_action_area().reorder_child(l, 0)
+     textview = _add_text(d, text)
+-    textview.set_wrap_mode(gtk.WRAP_WORD)
++    textview.set_wrap_mode(Gtk.WrapMode.WORD)
+     if not parent:
+-        d.set_position(gtk.WIN_POS_CENTER_ALWAYS)
++        d.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+     if can_squelch:
+-        cb = gtk.CheckButton(_("Do not show this next time"))
++        cb = Gtk.CheckButton(_("Do not show this next time"))
+         cb.show()
+         d.vbox.pack_start(cb, 0, 0, 0)
+ 
+@@ -400,17 +400,17 @@ def simple_diff(a, b, diffsonly=False):
+ # using fixed-width fonts. It also highlights lines that start with
+ # a '-' in red bold font and '+' with blue bold font.
+ def show_diff_blob(title, result):
+-    d = gtk.Dialog(title=title,
+-                   buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK))
+-    b = gtk.TextBuffer()
++    d = Gtk.Dialog(title=title,
++                   buttons=(Gtk.STOCK_OK, Gtk.ResponseType.OK))
++    b = Gtk.TextBuffer()
+ 
+     tags = b.get_tag_table()
+     for color in ["red", "blue", "green", "grey"]:
+-        tag = gtk.TextTag(color)
++        tag = Gtk.TextTag(color)
+         tag.set_property("foreground", color)
+         tags.add(tag)
+-    tag = gtk.TextTag("bold")
+-    tag.set_property("weight", pango.WEIGHT_BOLD)
++    tag = Gtk.TextTag("bold")
++    tag.set_property("weight", Pango.Weight.BOLD)
+     tags.add(tag)
+ 
+     try:
+@@ -430,12 +430,12 @@ def show_diff_blob(title, result):
+         else:
+             tags = ()
+         b.insert_with_tags_by_name(b.get_end_iter(), line + os.linesep, *tags)
+-    v = gtk.TextView(b)
+-    fontdesc = pango.FontDescription("Courier %i" % fontsize)
++    v = Gtk.TextView(b)
++    fontdesc = Pango.FontDescription("Courier %i" % fontsize)
+     v.modify_font(fontdesc)
+     v.set_editable(False)
+     v.show()
+-    s = gtk.ScrolledWindow()
++    s = Gtk.ScrolledWindow()
+     s.add(v)
+     s.show()
+     d.vbox.pack_start(s, 1, 1, 1)
+diff --git a/chirp/ui/dstaredit.py b/chirp/ui/dstaredit.py
+index 3409ef4..f636c43 100644
+--- a/chirp/ui/dstaredit.py
++++ b/chirp/ui/dstaredit.py
+@@ -13,10 +13,17 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+-import gobject
+ import logging
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
++from gi.repository import GObject
++
+ from chirp.ui import common, miscwidgets
+ 
+ LOG = logging.getLogger(__name__)
+@@ -27,7 +34,7 @@ WIDGETH = 30
+ 
+ class CallsignEditor(gtk.HBox):
+     __gsignals__ = {
+-        "changed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
++        "changed": (GObject.SignalFlags.RUN_LAST, None, ()),
+         }
+ 
+     def _cs_changed(self, listw, callid):
+@@ -39,9 +46,9 @@ class CallsignEditor(gtk.HBox):
+         return True
+ 
+     def make_list(self, width):
+-        cols = [(gobject.TYPE_INT, ""),
+-                (gobject.TYPE_INT, ""),
+-                (gobject.TYPE_STRING, _("Callsign")),
++        cols = [(GObject.TYPE_INT, ""),
++                (GObject.TYPE_INT, ""),
++                (GObject.TYPE_STRING, _("Callsign")),
+                 ]
+ 
+         self.listw = miscwidgets.KeyedListWidget(cols)
+diff --git a/chirp/ui/editorset.py b/chirp/ui/editorset.py
+index 2866dc9..8618314 100644
+--- a/chirp/ui/editorset.py
++++ b/chirp/ui/editorset.py
+@@ -14,10 +14,17 @@
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ import os
+-import gtk
+-import gobject
+ import logging
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
++from gi.repository import GObject
++
+ from chirp import chirp_common, directory
+ from chirp.drivers import generic_csv, generic_xml
+ from chirp.ui import memedit, dstaredit, bankedit, common, importdialog
+@@ -28,16 +35,16 @@ LOG = logging.getLogger(__name__)
+ 
+ class EditorSet(gtk.VBox):
+     __gsignals__ = {
+-        "want-close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+-        "status": (gobject.SIGNAL_RUN_LAST,
+-                   gobject.TYPE_NONE,
+-                   (gobject.TYPE_STRING,)),
+-        "usermsg": (gobject.SIGNAL_RUN_LAST,
+-                    gobject.TYPE_NONE,
+-                    (gobject.TYPE_STRING,)),
+-        "editor-selected": (gobject.SIGNAL_RUN_LAST,
+-                            gobject.TYPE_NONE,
+-                            (gobject.TYPE_STRING,)),
++        "want-close": (GObject.SignalFlags.RUN_LAST, None, ()),
++        "status": (GObject.SignalFlags.RUN_LAST,
++                   None,
++                   (GObject.TYPE_STRING,)),
++        "usermsg": (GObject.SignalFlags.RUN_LAST,
++                    None,
++                    (GObject.TYPE_STRING,)),
++        "editor-selected": (GObject.SignalFlags.RUN_LAST,
++                            None,
++                            (GObject.TYPE_STRING,)),
+         }
+ 
+     def _make_device_mapping_editors(self, device, devrthread, index):
+@@ -263,7 +270,7 @@ class EditorSet(gtk.VBox):
+         if count > 0:
+             self.editor_changed()
+             current_editor = self.get_current_editor()
+-            gobject.idle_add(current_editor.prefill)
++            GObject.idle_add(current_editor.prefill)
+ 
+         return count
+ 
+@@ -389,7 +396,7 @@ class EditorSet(gtk.VBox):
+         mem.freq = 146010000
+ 
+         def cb(*args):
+-            gobject.idle_add(self.editors["memedit0"].prefill)
++            GObject.idle_add(self.editors["memedit0"].prefill)
+ 
+         job = common.RadioJob(cb, "set_memory", mem)
+         job.set_desc(_("Priming memory"))
+diff --git a/chirp/ui/importdialog.py b/chirp/ui/importdialog.py
+index b854c40..14cdd43 100644
+--- a/chirp/ui/importdialog.py
++++ b/chirp/ui/importdialog.py
+@@ -13,11 +13,18 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+-import gobject
+ import pango
+ import logging
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
++from gi.repository import GObject
++
+ from chirp import errors, chirp_common, import_logic
+ from chirp.drivers import generic_xml
+ from chirp.ui import common
+@@ -73,7 +80,7 @@ class ImportMemoryBankJob(common.RadioJob):
+         import_logic.import_bank(radio, self.__src_radio,
+                                  self.__dst_mem, self.__src_mem)
+         if self.cb:
+-            gobject.idle_add(self.cb, *self.cb_args)
++            GObject.idle_add(self.cb, *self.cb_args)
+ 
+ 
+ class ImportDialog(gtk.Dialog):
+@@ -290,14 +297,14 @@ class ImportDialog(gtk.Dialog):
+     def make_view(self):
+         editable = [self.col_nloc, self.col_name, self.col_comm]
+ 
+-        self.__store = gtk.ListStore(gobject.TYPE_BOOLEAN,  # Import
+-                                     gobject.TYPE_INT,      # Source loc
+-                                     gobject.TYPE_INT,      # Destination loc
+-                                     gobject.TYPE_STRING,   # Name
+-                                     gobject.TYPE_STRING,   # Frequency
+-                                     gobject.TYPE_STRING,   # Comment
+-                                     gobject.TYPE_BOOLEAN,
+-                                     gobject.TYPE_STRING)
++        self.__store = gtk.ListStore(GObject.TYPE_BOOLEAN,  # Import
++                                     GObject.TYPE_INT,      # Source loc
++                                     GObject.TYPE_INT,      # Destination loc
++                                     GObject.TYPE_STRING,   # Name
++                                     GObject.TYPE_STRING,   # Frequency
++                                     GObject.TYPE_STRING,   # Comment
++                                     GObject.TYPE_BOOLEAN,
++                                     GObject.TYPE_STRING)
+         self.__view = gtk.TreeView(self.__store)
+         self.__view.show()
+ 
+@@ -306,7 +313,7 @@ class ImportDialog(gtk.Dialog):
+         for k in self.caps.keys():
+             t = self.types[k]
+ 
+-            if t == gobject.TYPE_BOOLEAN:
++            if t == GObject.TYPE_BOOLEAN:
+                 rend = gtk.CellRendererToggle()
+                 rend.connect("toggled", self._toggle, k)
+                 column = gtk.TreeViewColumn(self.caps[k], rend,
+@@ -608,14 +615,14 @@ class ImportDialog(gtk.Dialog):
+             }
+ 
+         self.types = {
+-            self.col_import:  gobject.TYPE_BOOLEAN,
+-            self.col_oloc:    gobject.TYPE_INT,
+-            self.col_nloc:    gobject.TYPE_INT,
+-            self.col_name:    gobject.TYPE_STRING,
+-            self.col_freq:    gobject.TYPE_STRING,
+-            self.col_comm:    gobject.TYPE_STRING,
+-            self.col_okay:    gobject.TYPE_BOOLEAN,
+-            self.col_tmsg:    gobject.TYPE_STRING,
++            self.col_import:  GObject.TYPE_BOOLEAN,
++            self.col_oloc:    GObject.TYPE_INT,
++            self.col_nloc:    GObject.TYPE_INT,
++            self.col_name:    GObject.TYPE_STRING,
++            self.col_freq:    GObject.TYPE_STRING,
++            self.col_comm:    GObject.TYPE_STRING,
++            self.col_okay:    GObject.TYPE_BOOLEAN,
++            self.col_tmsg:    GObject.TYPE_STRING,
+             }
+ 
+         self.src_radio = src_radio
+diff --git a/chirp/ui/inputdialog.py b/chirp/ui/inputdialog.py
+index 96531d0..b57ccb5 100644
+--- a/chirp/ui/inputdialog.py
++++ b/chirp/ui/inputdialog.py
+@@ -13,30 +13,33 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+ import logging
+ 
++import gi
++gi.require_version('Gtk', '3.0')
++from gi.repository import Gtk
++
+ from miscwidgets import make_choice
+ from chirp.ui import reporting
+ 
+ LOG = logging.getLogger(__name__)
+ 
+ 
+-class TextInputDialog(gtk.Dialog):
++class TextInputDialog(Gtk.Dialog):
+     def respond_ok(self, _):
+-        self.response(gtk.RESPONSE_OK)
++        self.response(Gtk.ResponseType.OK)
+ 
+     def __init__(self, **args):
+-        buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+-                   gtk.STOCK_OK, gtk.RESPONSE_OK)
+-        gtk.Dialog.__init__(self, buttons=buttons, **args)
++        buttons = (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
++                   Gtk.STOCK_OK, Gtk.ResponseType.OK)
++        Gtk.Dialog.__init__(self, buttons=buttons, **args)
+ 
+-        self.label = gtk.Label()
++        self.label = Gtk.Label()
+         self.label.set_size_request(300, 100)
+         # pylint: disable-msg=E1101
+         self.vbox.pack_start(self.label, 1, 1, 0)
+ 
+-        self.text = gtk.Entry()
++        self.text = Gtk.Entry()
+         self.text.connect("activate", self.respond_ok, None)
+         # pylint: disable-msg=E1101
+         self.vbox.pack_start(self.text, 1, 1, 0)
+@@ -45,15 +48,19 @@ class TextInputDialog(gtk.Dialog):
+         self.text.show()
+ 
+ 
+-class ChoiceDialog(gtk.Dialog):
++class ChoiceDialog(Gtk.Dialog):
+     editable = False
+ 
+     def __init__(self, choices, **args):
+-        buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+-                   gtk.STOCK_OK, gtk.RESPONSE_OK)
+-        gtk.Dialog.__init__(self, buttons=buttons, **args)
++        buttons = (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
++                   Gtk.STOCK_OK, Gtk.ResponseType.OK)
++        Gtk.Dialog.__init__(self, buttons=buttons, **args)
++
++        self.set_border_width(10)
++        self.set_default_size(150, 100)
++        self.vbox.set_spacing(6)
+ 
+-        self.label = gtk.Label()
++        self.label = Gtk.Label()
+         self.label.set_size_request(300, 100)
+         # pylint: disable-msg=E1101
+         self.vbox.pack_start(self.label, 1, 1, 0)
+@@ -69,7 +76,7 @@ class ChoiceDialog(gtk.Dialog):
+         self.vbox.pack_start(self.choice, 1, 1, 0)
+         self.choice.show()
+ 
+-        self.set_default_response(gtk.RESPONSE_OK)
++        self.set_default_response(Gtk.ResponseType.OK)
+ 
+ 
+ class EditableChoiceDialog(ChoiceDialog):
+@@ -78,13 +85,13 @@ class EditableChoiceDialog(ChoiceDialog):
+     def __init__(self, choices, **args):
+         ChoiceDialog.__init__(self, choices, **args)
+ 
+-        self.choice.child.set_activates_default(True)
++        self.choice.get_child().set_activates_default(True)
+ 
+ 
+-class ExceptionDialog(gtk.MessageDialog):
++class ExceptionDialog(Gtk.MessageDialog):
+     def __init__(self, exception, **args):
+-        gtk.MessageDialog.__init__(self, buttons=gtk.BUTTONS_OK,
+-                                   type=gtk.MESSAGE_ERROR, **args)
++        Gtk.MessageDialog.__init__(self, buttons=Gtk.ButtonsType.OK,
++                                   type=Gtk.MessageType.ERROR, **args)
+         self.set_property("text", _("An error has occurred"))
+         self.format_secondary_text(str(exception))
+ 
+@@ -96,25 +103,25 @@ class ExceptionDialog(gtk.MessageDialog):
+         LOG.error("----------------------------")
+ 
+ 
+-class FieldDialog(gtk.Dialog):
++class FieldDialog(Gtk.Dialog):
+     def __init__(self, **kwargs):
+         if "buttons" not in kwargs.keys():
+-            kwargs["buttons"] = (gtk.STOCK_OK, gtk.RESPONSE_OK,
+-                                 gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
++            kwargs["buttons"] = (Gtk.STOCK_OK, Gtk.ResponseType.OK,
++                                 Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
+ 
+         self.__fields = {}
+-        self.set_default_response(gtk.RESPONSE_OK)
++        self.set_default_response(Gtk.ResponseType.OK)
+ 
+-        gtk.Dialog.__init__(self, **kwargs)
++        Gtk.Dialog.__init__(self, **kwargs)
+ 
+     def response(self, _):
+         LOG.debug("Blocking response")
+         return
+ 
+     def add_field(self, label, widget, validator=None):
+-        box = gtk.HBox(True, 2)
++        box = Gtk.HBox(True, 2)
+ 
+-        lab = gtk.Label(label)
++        lab = Gtk.Label(label=label)
+         lab.show()
+ 
+         widget.set_size_request(150, -1)
+@@ -133,11 +140,11 @@ class FieldDialog(gtk.Dialog):
+         return self.__fields.get(label, None)
+ 
+ 
+-class OverwriteDialog(gtk.MessageDialog):
++class OverwriteDialog(Gtk.MessageDialog):
+     def __init__(self, filename):
+-        gtk.Dialog.__init__(self,
+-                            buttons=(_("Overwrite"), gtk.RESPONSE_OK,
+-                                     gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
++        Gtk.Dialog.__init__(self,
++                            buttons=(_("Overwrite"), Gtk.ResponseType.OK,
++                                     Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
+ 
+         self.set_property("text", _("File Exists"))
+ 
+@@ -149,9 +156,9 @@ class OverwriteDialog(gtk.MessageDialog):
+ 
+ if __name__ == "__main__":
+     # pylint: disable-msg=C0103
+-    d = FieldDialog(buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK))
+-    d.add_field("Foo", gtk.Entry())
++    d = FieldDialog(buttons=(Gtk.STOCK_OK, Gtk.ResponseType.OK))
++    d.add_field("Foo", Gtk.Entry())
+     d.add_field("Bar", make_choice(["A", "B"]))
+     d.run()
+-    gtk.main()
++    Gtk.main()
+     d.destroy()
+diff --git a/chirp/ui/mainapp.py b/chirp/ui/mainapp.py
+index c814d13..01c3816 100644
+--- a/chirp/ui/mainapp.py
++++ b/chirp/ui/mainapp.py
+@@ -18,15 +18,19 @@ from datetime import datetime
+ import os
+ import tempfile
+ import urllib
+-import webbrowser
+ from glob import glob
+ import shutil
+ import time
+ import logging
+-import gtk
+-import gobject
+ import sys
+ 
++import gi
++gi.require_version('Gtk', '3.0')
++gi.require_version('Gdk', '3.0')
++from gi.repository import Gtk
++from gi.repository import Gdk
++from gi.repository import GObject
++
+ from chirp.ui import inputdialog, common
+ from chirp import platform, directory, util
+ from chirp.drivers import generic_xml, generic_csv, repeaterbook
+@@ -36,7 +40,7 @@ from chirp import CHIRP_VERSION, chirp_common, detect, errors
+ from chirp.ui import editorset, clone, miscwidgets, config, reporting, fips
+ from chirp.ui import bandplans
+ 
+-gobject.threads_init()
++GObject.threads_init()
+ 
+ LOG = logging.getLogger(__name__)
+ 
+@@ -80,7 +84,7 @@ class ModifiedError(Exception):
+     pass
+ 
+ 
+-class ChirpMain(gtk.Window):
++class ChirpMain(Gtk.Window):
+ 
+     def get_current_editorset(self):
+         page = self.tabs.get_current_page()
+@@ -160,12 +164,12 @@ class ChirpMain(gtk.Window):
+         for i in range(0, self.tabs.get_n_pages()):
+             esets.append(self.tabs.get_nth_page(i))
+ 
+-        d = gtk.Dialog(title="Diff Radios",
+-                       buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK,
+-                                gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
++        d = Gtk.Dialog(title="Diff Radios",
++                       buttons=(Gtk.STOCK_OK, Gtk.ResponseType.OK,
++                                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL),
+                        parent=self)
+ 
+-        label = gtk.Label("")
++        label = Gtk.Label(label="")
+         label.set_markup("<b>-1</b> for either Mem # does a full-file hex " +
+                          "dump with diffs highlighted.\n" +
+                          "<b>-2</b> for first Mem # shows " +
+@@ -180,10 +184,10 @@ class ChirpMain(gtk.Window):
+                                            eset.filename))
+         choice_a = miscwidgets.make_choice(choices, False, choices[0])
+         choice_a.show()
+-        chan_a = gtk.SpinButton()
++        chan_a = Gtk.SpinButton()
+         chan_a.get_adjustment().set_all(1, -2, 999, 1, 10, 0)
+         chan_a.show()
+-        hbox = gtk.HBox(False, 3)
++        hbox = Gtk.HBox(False, 3)
+         hbox.pack_start(choice_a, 1, 1, 1)
+         hbox.pack_start(chan_a, 0, 0, 0)
+         hbox.show()
+@@ -191,10 +195,10 @@ class ChirpMain(gtk.Window):
+ 
+         choice_b = miscwidgets.make_choice(choices, False, choices[1])
+         choice_b.show()
+-        chan_b = gtk.SpinButton()
++        chan_b = Gtk.SpinButton()
+         chan_b.get_adjustment().set_all(1, -1, 999, 1, 10, 0)
+         chan_b.show()
+-        hbox = gtk.HBox(False, 3)
++        hbox = Gtk.HBox(False, 3)
+         hbox.pack_start(choice_b, 1, 1, 1)
+         hbox.pack_start(chan_b, 0, 0, 0)
+         hbox.show()
+@@ -206,7 +210,7 @@ class ChirpMain(gtk.Window):
+         sel_b = choice_b.get_active_text()
+         sel_chan_b = chan_b.get_value()
+         d.destroy()
+-        if r == gtk.RESPONSE_CANCEL:
++        if r == Gtk.ResponseType.CANCEL:
+             return
+ 
+         if sel_a == sel_b:
+@@ -280,7 +284,7 @@ class ChirpMain(gtk.Window):
+                 continue
+             radiolist["%s %s" % (radio.VENDOR, radio.MODEL)] = drv
+ 
+-        lab = gtk.Label("""<b><big>Unable to detect model!</big></b>
++        lab = Gtk.Label("""<b><big>Unable to detect model!</big></b>
+ 
+ If you think that it is valid, you can select a radio model below to
+ force an open attempt. If selecting the model manually works, please
+@@ -289,15 +293,15 @@ does not work, it is likely that you are trying to open some other type
+ of file.
+ """)
+ 
+-        lab.set_justify(gtk.JUSTIFY_FILL)
++        lab.set_justify(Gtk.Justification.FILL)
+         lab.set_line_wrap(True)
+         lab.set_use_markup(True)
+         lab.show()
+         choice = miscwidgets.make_choice(sorted(radiolist.keys()), False,
+                                          sorted(radiolist.keys())[0])
+-        d = gtk.Dialog(title="Detection Failed",
+-                       buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK,
+-                                gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
++        d = Gtk.Dialog(title="Detection Failed",
++                       buttons=(Gtk.STOCK_OK, Gtk.ResponseType.OK,
++                                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
+         d.vbox.pack_start(lab, 0, 0, 0)
+         d.vbox.pack_start(choice, 0, 0, 0)
+         d.vbox.set_spacing(5)
+@@ -306,7 +310,7 @@ of file.
+         # d.set_resizable(False)
+         r = d.run()
+         d.destroy()
+-        if r != gtk.RESPONSE_OK:
++        if r != Gtk.ResponseType.OK:
+             return
+         try:
+             rc = directory.DRV_TO_RADIO[radiolist[choice.get_active_text()]]
+@@ -388,7 +392,7 @@ of file.
+         self._show_information(radio)
+ 
+     def do_live_warning(self, radio):
+-        d = gtk.MessageDialog(parent=self, buttons=gtk.BUTTONS_OK)
++        d = Gtk.MessageDialog(parent=self, buttons=Gtk.ButtonsType.OK)
+         d.set_markup("<big><b>" + _("Note:") + "</b></big>")
+         msg = _("The {vendor} {model} operates in <b>live mode</b>. "
+                 "This means that any changes you make are immediately sent "
+@@ -399,7 +403,7 @@ of file.
+         msg = msg.format(vendor=radio.VENDOR, model=radio.MODEL)
+         d.format_secondary_markup(msg)
+ 
+-        again = gtk.CheckButton(_("Don't show this again"))
++        again = Gtk.CheckButton(_("Don't show this again"))
+         again.show()
+         d.vbox.pack_start(again, 0, 0, 0)
+         d.run()
+@@ -466,7 +470,7 @@ of file.
+                 dlg = inputdialog.OverwriteDialog(fname)
+                 owrite = dlg.run()
+                 dlg.destroy()
+-                if owrite == gtk.RESPONSE_OK:
++                if owrite == Gtk.ResponseType.OK:
+                     break
+             else:
+                 break
+@@ -519,14 +523,14 @@ of file.
+                 self.menu_ag.remove_action(old_action)
+ 
+             file_basename = os.path.basename(fname).replace("_", "__")
+-            action = gtk.Action(
++            action = Gtk.Action(
+                 action_name, "_%i. %s" % (i + 1, file_basename),
+                 _("Open recent file {name}").format(name=fname), "")
+             action.connect("activate", lambda a, f: self.do_open(f), fname)
+             mid = self.menu_uim.new_merge_id()
+             self.menu_uim.add_ui(mid, path,
+                                  action_name, action_name,
+-                                 gtk.UI_MANAGER_MENUITEM, False)
++                                 Gtk.UIManagerItemType.MENUITEM, False)
+             self.menu_ag.add_action(action)
+             i += 1
+ 
+@@ -576,7 +580,7 @@ of file.
+             name = os.path.splitext(os.path.basename(config))[0]
+             action_name = "stock-%i" % configs.index(config)
+             path = "/MenuBar/radio/stock"
+-            action = gtk.Action(action_name,
++            action = Gtk.Action(action_name,
+                                 name,
+                                 _("Import stock "
+                                   "configuration {name}").format(name=name),
+@@ -585,14 +589,14 @@ of file.
+             mid = self.menu_uim.new_merge_id()
+             mid = self.menu_uim.add_ui(mid, path,
+                                        action_name, action_name,
+-                                       gtk.UI_MANAGER_MENUITEM, False)
++                                       Gtk.UIManagerItemType.MENUITEM, False)
+             self.menu_ag.add_action(action)
+ 
+         def _do_open_action(config):
+             name = os.path.splitext(os.path.basename(config))[0]
+             action_name = "openstock-%i" % configs.index(config)
+             path = "/MenuBar/file/openstock"
+-            action = gtk.Action(action_name,
++            action = Gtk.Action(action_name,
+                                 name,
+                                 _("Open stock "
+                                   "configuration {name}").format(name=name),
+@@ -601,7 +605,7 @@ of file.
+             mid = self.menu_uim.new_merge_id()
+             mid = self.menu_uim.add_ui(mid, path,
+                                        action_name, action_name,
+-                                       gtk.UI_MANAGER_MENUITEM, False)
++                                       Gtk.UIManagerItemType.MENUITEM, False)
+             self.menu_ag.add_action(action)
+ 
+         configs = glob(os.path.join(stock_dir, "*.csv"))
+@@ -621,11 +625,11 @@ of file.
+                 "Do you want to proceed?")
+         resp, squelch = common.show_warning(msg, text,
+                                             title=title,
+-                                            buttons=gtk.BUTTONS_YES_NO,
++                                            buttons=Gtk.ButtonsType.YES_NO,
+                                             can_squelch=True)
+-        if resp == gtk.RESPONSE_YES:
++        if resp == Gtk.ResponseType.YES:
+             CONF.set_bool(sql_key, not squelch, "state")
+-        return resp == gtk.RESPONSE_YES
++        return resp == Gtk.ResponseType.YES
+ 
+     def _show_information(self, radio):
+         message = radio.get_prompts().info
+@@ -665,13 +669,13 @@ of file.
+         if CONF.get_bool("clone_instructions", "noconfirm"):
+             return
+ 
+-        d = gtk.MessageDialog(parent=self, buttons=gtk.BUTTONS_OK)
++        d = Gtk.MessageDialog(parent=self, buttons=Gtk.ButtonsType.OK)
+         d.set_markup("<big><b>" + _("{name} Instructions").format(
+                      name=radio.get_name()) + "</b></big>")
+         msg = _("{instructions}").format(instructions=message)
+         d.format_secondary_markup(msg)
+ 
+-        again = gtk.CheckButton(
++        again = Gtk.CheckButton(
+             _("Don't show instructions for any radio again"))
+         again.show()
+         again.connect("toggled", lambda action:
+@@ -785,16 +789,16 @@ of file.
+         if eset.is_modified():
+             dlg = miscwidgets.YesNoDialog(
+                 title=_("Save Changes?"), parent=self,
+-                buttons=(gtk.STOCK_YES, gtk.RESPONSE_YES,
+-                         gtk.STOCK_NO, gtk.RESPONSE_NO,
+-                         gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
++                buttons=(Gtk.STOCK_YES, Gtk.ResponseType.YES,
++                         Gtk.STOCK_NO, Gtk.ResponseType.NO,
++                         Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
+             dlg.set_text(_("File is modified, save changes before closing?"))
+             res = dlg.run()
+             dlg.destroy()
+ 
+-            if res == gtk.RESPONSE_YES:
++            if res == Gtk.ResponseType.YES:
+                 self.do_save(eset)
+-            elif res != gtk.RESPONSE_NO:
++            elif res != Gtk.ResponseType.NO:
+                 raise ModifiedError()
+ 
+         eset.rthread.stop()
+@@ -839,9 +843,9 @@ of file.
+         reporting.report_model_usage(eset.rthread.radio, "import", count > 0)
+ 
+     def do_dmrmarc_prompt(self):
+-        fields = {"1City":      (gtk.Entry(), lambda x: x),
+-                  "2State":     (gtk.Entry(), lambda x: x),
+-                  "3Country":   (gtk.Entry(), lambda x: x),
++        fields = {"1City":      (Gtk.Entry(), lambda x: x),
++                  "2State":     (Gtk.Entry(), lambda x: x),
++                  "3Country":   (Gtk.Entry(), lambda x: x),
+                   }
+ 
+         d = inputdialog.FieldDialog(title=_("DMR-MARC Repeater Database Dump"),
+@@ -850,7 +854,7 @@ of file.
+             d.add_field(k[1:], fields[k][0])
+             fields[k][0].set_text(CONF.get(k[1:], "dmrmarc") or "")
+ 
+-        while d.run() == gtk.RESPONSE_OK:
++        while d.run() == Gtk.ResponseType.OK:
+             for k in sorted(fields.keys()):
+                 widget, validator = fields[k]
+                 try:
+@@ -867,7 +871,7 @@ of file.
+         return False
+ 
+     def do_dmrmarc(self, do_import):
+-        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
++        self.window.set_cursor(Gdk.Cursor.new(Gdk.CursorType.WATCH))
+         if not self.do_dmrmarc_prompt():
+             self.window.set_cursor(None)
+             return
+@@ -878,9 +882,9 @@ of file.
+ 
+         # Do this in case the import process is going to take a while
+         # to make sure we process events leading up to this
+-        gtk.gdk.window_process_all_updates()
+-        while gtk.events_pending():
+-            gtk.main_iteration(False)
++        Gdk.window_process_all_updates()
++        while Gtk.events_pending():
++            Gtk.main_iteration(False)
+ 
+         if do_import:
+             eset = self.get_current_editorset()
+@@ -899,7 +903,7 @@ of file.
+ 
+     def do_repeaterbook_political_prompt(self):
+         if not CONF.get_bool("has_seen_credit", "repeaterbook"):
+-            d = gtk.MessageDialog(parent=self, buttons=gtk.BUTTONS_OK)
++            d = Gtk.MessageDialog(parent=self, buttons=Gtk.ButtonsType.OK)
+             d.set_markup("<big><big><b>RepeaterBook</b></big>\r\n" +
+                          "<i>North American Repeater Directory</i></big>")
+             d.format_secondary_markup("For more information about this " +
+@@ -961,7 +965,7 @@ of file.
+ 
+         r = d.run()
+         d.destroy()
+-        if r != gtk.RESPONSE_OK:
++        if r != Gtk.ResponseType.OK:
+             return False
+ 
+         code = fips.FIPS_STATES[state.get_active_text()]
+@@ -974,7 +978,7 @@ of file.
+         return True
+ 
+     def do_repeaterbook_political(self, do_import):
+-        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
++        self.window.set_cursor(Gdk.Cursor.new(Gdk.CursorType.WATCH))
+         if not self.do_repeaterbook_political_prompt():
+             self.window.set_cursor(None)
+             return
+@@ -1007,9 +1011,9 @@ of file.
+ 
+         # Do this in case the import process is going to take a while
+         # to make sure we process events leading up to this
+-        gtk.gdk.window_process_all_updates()
+-        while gtk.events_pending():
+-            gtk.main_iteration(False)
++        Gdk.window_process_all_updates()
++        while Gtk.events_pending():
++            Gtk.main_iteration(False)
+ 
+         fn = tempfile.mktemp(".csv")
+         filename, headers = urllib.urlretrieve(query, fn)
+@@ -1053,8 +1057,8 @@ of file.
+                     break
+         except:
+             pass
+-        fields = {"1Location":  (gtk.Entry(), lambda x: x.get_text()),
+-                  "2Distance":  (gtk.Entry(), lambda x: x.get_text()),
++        fields = {"1Location":  (Gtk.Entry(), lambda x: x.get_text()),
++                  "2Distance":  (Gtk.Entry(), lambda x: x.get_text()),
+                   "3Band":      (miscwidgets.make_choice(
+                                 sorted(RB_BANDS.keys(), key=key_bands),
+                                 False, default_band),
+@@ -1065,11 +1069,11 @@ of file.
+                                     parent=self)
+         for k in sorted(fields.keys()):
+             d.add_field(k[1:], fields[k][0])
+-            if isinstance(fields[k][0], gtk.Entry):
++            if isinstance(fields[k][0], Gtk.Entry):
+                 fields[k][0].set_text(
+                     CONF.get(k[1:].lower(), "repeaterbook") or "")
+ 
+-        while d.run() == gtk.RESPONSE_OK:
++        while d.run() == Gtk.ResponseType.OK:
+             valid = True
+             for k, (widget, fn) in fields.items():
+                 try:
+@@ -1089,7 +1093,7 @@ of file.
+         return False
+ 
+     def do_repeaterbook_proximity(self, do_import):
+-        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
++        self.window.set_cursor(Gdk.Cursor.new(Gdk.CursorType.WATCH))
+         if not self.do_repeaterbook_proximity_prompt():
+             self.window.set_cursor(None)
+             return
+@@ -1113,9 +1117,9 @@ of file.
+ 
+         # Do this in case the import process is going to take a while
+         # to make sure we process events leading up to this
+-        gtk.gdk.window_process_all_updates()
+-        while gtk.events_pending():
+-            gtk.main_iteration(False)
++        Gdk.window_process_all_updates()
++        while Gtk.events_pending():
++            Gtk.main_iteration(False)
+ 
+         fn = tempfile.mktemp(".csv")
+         filename, headers = urllib.urlretrieve(query, fn)
+@@ -1169,18 +1173,18 @@ of file.
+             "Only Working":
+                 (miscwidgets.make_choice(['', 'yes'], False),
+                  lambda x: str(x.get_active_text())),
+-            "Latitude": (gtk.Entry(), lambda x: float(x.get_text())),
+-            "Longitude": (gtk.Entry(), lambda x: float(x.get_text())),
+-            "Range": (gtk.Entry(), lambda x: int(x.get_text())),
++            "Latitude": (Gtk.Entry(), lambda x: float(x.get_text())),
++            "Longitude": (Gtk.Entry(), lambda x: float(x.get_text())),
++            "Range": (Gtk.Entry(), lambda x: int(x.get_text())),
+         }
+         for name in sorted(fields.keys()):
+             value, fn = fields[name]
+             d.add_field(name, value)
+-        while d.run() == gtk.RESPONSE_OK:
++        while d.run() == Gtk.ResponseType.OK:
+             query = "http://przemienniki.net/export/chirp.csv?"
+             args = []
+             for name, (value, fn) in fields.items():
+-                if isinstance(value, gtk.Entry):
++                if isinstance(value, Gtk.Entry):
+                     contents = value.get_text()
+                 else:
+                     contents = value.get_active_text()
+@@ -1232,13 +1236,13 @@ of file.
+             self.do_open_live(radio, read_only=True)
+ 
+     def do_rfinder_prompt(self):
+-        fields = {"1Email": (gtk.Entry(), lambda x: "@" in x),
+-                  "2Password": (gtk.Entry(), lambda x: x),
+-                  "3Latitude": (gtk.Entry(),
++        fields = {"1Email": (Gtk.Entry(), lambda x: "@" in x),
++                  "2Password": (Gtk.Entry(), lambda x: x),
++                  "3Latitude": (Gtk.Entry(),
+                                 lambda x: float(x) < 90 and float(x) > -90),
+-                  "4Longitude": (gtk.Entry(),
++                  "4Longitude": (Gtk.Entry(),
+                                  lambda x: float(x) < 180 and float(x) > -180),
+-                  "5Range_in_Miles": (gtk.Entry(),
++                  "5Range_in_Miles": (Gtk.Entry(),
+                                       lambda x: int(x) > 0 and int(x) < 5000),
+                   }
+ 
+@@ -1248,7 +1252,7 @@ of file.
+             fields[k][0].set_text(CONF.get(k[1:], "rfinder") or "")
+             fields[k][0].set_visibility(k != "2Password")
+ 
+-        while d.run() == gtk.RESPONSE_OK:
++        while d.run() == Gtk.ResponseType.OK:
+             valid = True
+             for k in sorted(fields.keys()):
+                 widget, validator = fields[k]
+@@ -1270,7 +1274,7 @@ of file.
+         return False
+ 
+     def do_rfinder(self, do_import):
+-        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
++        self.window.set_cursor(Gdk.Cursor.new(Gdk.CursorType.WATCH))
+         if not self.do_rfinder_prompt():
+             self.window.set_cursor(None)
+             return
+@@ -1283,9 +1287,9 @@ of file.
+ 
+         # Do this in case the import process is going to take a while
+         # to make sure we process events leading up to this
+-        gtk.gdk.window_process_all_updates()
+-        while gtk.events_pending():
+-            gtk.main_iteration(False)
++        Gdk.window_process_all_updates()
++        while Gtk.events_pending():
++            Gtk.main_iteration(False)
+ 
+         if do_import:
+             eset = self.get_current_editorset()
+@@ -1301,9 +1305,9 @@ of file.
+         self.window.set_cursor(None)
+ 
+     def do_radioreference_prompt(self):
+-        fields = {"1Username":  (gtk.Entry(), lambda x: x),
+-                  "2Password":  (gtk.Entry(), lambda x: x),
+-                  "3Zipcode":   (gtk.Entry(), lambda x: x),
++        fields = {"1Username":  (Gtk.Entry(), lambda x: x),
++                  "2Password":  (Gtk.Entry(), lambda x: x),
++                  "3Zipcode":   (Gtk.Entry(), lambda x: x),
+                   }
+ 
+         d = inputdialog.FieldDialog(title=_("RadioReference.com Query"),
+@@ -1313,7 +1317,7 @@ of file.
+             fields[k][0].set_text(CONF.get(k[1:], "radioreference") or "")
+             fields[k][0].set_visibility(k != "2Password")
+ 
+-        while d.run() == gtk.RESPONSE_OK:
++        while d.run() == Gtk.ResponseType.OK:
+             valid = True
+             for k in sorted(fields.keys()):
+                 widget, validator = fields[k]
+@@ -1335,7 +1339,7 @@ of file.
+         return False
+ 
+     def do_radioreference(self, do_import):
+-        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
++        self.window.set_cursor(Gdk.Cursor.new(Gdk.CursorType.WATCH))
+         if not self.do_radioreference_prompt():
+             self.window.set_cursor(None)
+             return
+@@ -1346,9 +1350,9 @@ of file.
+ 
+         # Do this in case the import process is going to take a while
+         # to make sure we process events leading up to this
+-        gtk.gdk.window_process_all_updates()
+-        while gtk.events_pending():
+-            gtk.main_iteration(False)
++        Gdk.window_process_all_updates()
++        while Gtk.events_pending():
++            Gtk.main_iteration(False)
+ 
+         if do_import:
+             eset = self.get_current_editorset()
+@@ -1388,7 +1392,7 @@ of file.
+             dlg = inputdialog.OverwriteDialog(filen)
+             owrite = dlg.run()
+             dlg.destroy()
+-            if owrite != gtk.RESPONSE_OK:
++            if owrite != Gtk.ResponseType.OK:
+                 return
+             os.remove(filen)
+ 
+@@ -1396,18 +1400,16 @@ of file.
+         reporting.report_model_usage(eset.rthread.radio, "export", count > 0)
+ 
+     def do_about(self):
+-        d = gtk.AboutDialog()
++        d = Gtk.AboutDialog()
+         d.set_transient_for(self)
+         import sys
+-        verinfo = "GTK %s\nPyGTK %s\nPython %s\n" % (
+-            ".".join([str(x) for x in gtk.gtk_version]),
+-            ".".join([str(x) for x in gtk.pygtk_version]),
++        verinfo = "GTK %s.%s.%s\nPython %s\n" % (
++            Gtk.get_major_version(),
++            Gtk.get_minor_version(),
++            Gtk.get_micro_version(),
+             sys.version.split()[0])
+ 
+-        # Set url hook to handle user activating a URL link in the about dialog
+-        gtk.about_dialog_set_url_hook(lambda dlg, url: webbrowser.open(url))
+-
+-        d.set_name("CHIRP")
++        d.set_program_name("CHIRP")
+         d.set_version(CHIRP_VERSION)
+         d.set_copyright("Copyright 2015 Dan Smith (KK7DS)")
+         d.set_website("http://chirp.danplanet.com")
+@@ -1435,24 +1437,21 @@ of file.
+         d.run()
+         d.destroy()
+ 
+-    def do_gethelp(self):
+-        webbrowser.open("http://chirp.danplanet.com")
+-
+     def do_columns(self):
+         eset = self.get_current_editorset()
+         driver = directory.get_driver(eset.rthread.radio.__class__)
+         radio_name = "%s %s %s" % (eset.rthread.radio.VENDOR,
+                                    eset.rthread.radio.MODEL,
+                                    eset.rthread.radio.VARIANT)
+-        d = gtk.Dialog(title=_("Select Columns"),
++        d = Gtk.Dialog(title=_("Select Columns"),
+                        parent=self,
+-                       buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK,
+-                                gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
++                       buttons=(Gtk.STOCK_OK, Gtk.ResponseType.OK,
++                                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
+ 
+-        vbox = gtk.VBox()
++        vbox = Gtk.VBox()
+         vbox.show()
+-        sw = gtk.ScrolledWindow()
+-        sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
++        sw = Gtk.ScrolledWindow()
++        sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+         sw.add_with_viewport(vbox)
+         sw.show()
+         d.vbox.pack_start(sw, 1, 1, 1)
+@@ -1460,9 +1459,9 @@ of file.
+         d.set_resizable(False)
+ 
+         labelstr = _("Visible columns for {radio}").format(radio=radio_name)
+-        label = gtk.Label(labelstr)
++        label = Gtk.Label(label=labelstr)
+         label.show()
+-        vbox.pack_start(label)
++        vbox.pack_start(label, True, True, 0)
+ 
+         fields = []
+         memedit = eset.get_current_editor()  # .editors["memedit"]
+@@ -1474,7 +1473,7 @@ of file.
+                 continue
+             label = colspec[0]
+             visible = memedit.get_column_visible(memedit.col(label))
+-            widget = gtk.CheckButton(label)
++            widget = Gtk.CheckButton(label)
+             widget.set_active(visible)
+             fields.append(widget)
+             vbox.pack_start(widget, 1, 1, 1)
+@@ -1482,7 +1481,7 @@ of file.
+ 
+         res = d.run()
+         selected_columns = []
+-        if res == gtk.RESPONSE_OK:
++        if res == Gtk.ResponseType.OK:
+             for widget in fields:
+                 colnum = memedit.col(widget.get_label())
+                 memedit.set_column_visible(colnum, widget.get_active())
+@@ -1521,7 +1520,7 @@ of file.
+ 
+     def do_toggle_report(self, action):
+         if not action.get_active():
+-            d = gtk.MessageDialog(buttons=gtk.BUTTONS_YES_NO, parent=self)
++            d = Gtk.MessageDialog(buttons=Gtk.ButtonsType.YES_NO, parent=self)
+             markup = "<b><big>" + _("Reporting is disabled") + "</big></b>"
+             d.set_markup(markup)
+             msg = _("The reporting feature of CHIRP is designed to help "
+@@ -1536,7 +1535,7 @@ of file.
+             d.format_secondary_markup(msg.replace("\n", "\r\n"))
+             r = d.run()
+             d.destroy()
+-            if r == gtk.RESPONSE_NO:
++            if r == Gtk.ResponseType.NO:
+                 action.set_active(not action.get_active())
+ 
+         conf = config.get()
+@@ -1567,13 +1566,13 @@ of file.
+                  "Spanish"]
+         d = inputdialog.ChoiceDialog(langs, parent=self,
+                                      title="Choose Language")
+-        d.label.set_text(_("Choose a language or Auto to use the "
++        d.label.set_text(_("Choose a language or select Auto to use the "
+                            "operating system default. You will need to "
+                            "restart the application before the change "
+-                           "will take effect"))
++                           "will take effect."))
+         d.label.set_line_wrap(True)
+         r = d.run()
+-        if r == gtk.RESPONSE_OK:
++        if r == Gtk.ResponseType.OK:
+             LOG.debug("Chose language %s" % d.choice.get_active_text())
+             conf = config.get()
+             conf.set("language", d.choice.get_active_text(), "state")
+@@ -1610,7 +1609,7 @@ of file.
+         action = _action.get_name()
+ 
+         if action == "quit":
+-            gtk.main_quit()
++            Gtk.main_quit()
+         elif action == "new":
+             self.do_new()
+         elif action == "open":
+@@ -1773,15 +1772,15 @@ of file.
+             CTRL_KEY = "<Meta>"
+         actions = [
+             ('file', None, _("_File"), None, None, self.mh),
+-            ('new', gtk.STOCK_NEW, None, None, None, self.mh),
+-            ('open', gtk.STOCK_OPEN, None, None, None, self.mh),
++            ('new', Gtk.STOCK_NEW, None, None, None, self.mh),
++            ('open', Gtk.STOCK_OPEN, None, None, None, self.mh),
+             ('openstock', None, _("Open stock config"), None, None, self.mh),
+             ('recent', None, _("_Recent"), None, None, self.mh),
+-            ('save', gtk.STOCK_SAVE, None, None, None, self.mh),
+-            ('saveas', gtk.STOCK_SAVE_AS, None, None, None, self.mh),
++            ('save', Gtk.STOCK_SAVE, None, None, None, self.mh),
++            ('saveas', Gtk.STOCK_SAVE_AS, None, None, None, self.mh),
+             ('loadmod', None, _("Load Module"), None, None, self.mh),
+-            ('close', gtk.STOCK_CLOSE, None, None, None, self.mh),
+-            ('quit', gtk.STOCK_QUIT, None, None, None, self.mh),
++            ('close', Gtk.STOCK_CLOSE, None, None, None, self.mh),
++            ('quit', Gtk.STOCK_QUIT, None, None, None, self.mh),
+             ('edit', None, _("_Edit"), None, None, self.mh),
+             ('cut', None, _("_Cut"), "%sx" % CTRL_KEY, None, self.mh),
+             ('copy', None, _("_Copy"), "%sc" % CTRL_KEY, None, self.mh),
+@@ -1843,9 +1842,9 @@ of file.
+              None, None, self.mh),
+             ('channel_defaults', None, _("Channel defaults"),
+              None, None, self.mh),
+-            ('cancelq', gtk.STOCK_STOP, None, "Escape", None, self.mh),
++            ('cancelq', Gtk.STOCK_STOP, None, "Escape", None, self.mh),
+             ('help', None, _('Help'), None, None, self.mh),
+-            ('about', gtk.STOCK_ABOUT, None, None, None, self.mh),
++            ('about', Gtk.STOCK_ABOUT, None, None, None, self.mh),
+             ('gethelp', None, _("Get Help Online..."), None, None, self.mh),
+         ]
+ 
+@@ -1871,8 +1870,8 @@ of file.
+                     None, None, self.mh, dv),
+                    ]
+ 
+-        self.menu_uim = gtk.UIManager()
+-        self.menu_ag = gtk.ActionGroup("MenuBar")
++        self.menu_uim = Gtk.UIManager()
++        self.menu_ag = Gtk.ActionGroup("MenuBar")
+         self.menu_ag.add_actions(actions)
+         self.menu_ag.add_toggle_actions(toggles)
+ 
+@@ -1893,7 +1892,7 @@ of file.
+         return self.menu_uim.get_widget("/MenuBar")
+ 
+     def make_tabs(self):
+-        self.tabs = gtk.Notebook()
++        self.tabs = Gtk.Notebook()
+         self.tabs.set_scrollable(True)
+ 
+         return self.tabs
+@@ -1908,25 +1907,28 @@ of file.
+             except ModifiedError:
+                 return False
+ 
+-        gtk.main_quit()
++        Gtk.main_quit()
+ 
+         return True
+ 
++    # Not sure what these are used for. Cannot find them in use in any
++    # other module either. In GTK3 the boxes these only add big
++    # unpopulated boxes and visible lines.
++    """
+     def make_status_bar(self):
+-        box = gtk.HBox(False, 2)
++        box = Gtk.HBox(False, 2)
+ 
+-        self.sb_general = gtk.Statusbar()
+-        self.sb_general.set_has_resize_grip(False)
++        self.sb_general = Gtk.Statusbar()
+         self.sb_general.show()
+         box.pack_start(self.sb_general, 1, 1, 1)
+ 
+-        self.sb_radio = gtk.Statusbar()
+-        self.sb_radio.set_has_resize_grip(True)
++        self.sb_radio = Gtk.Statusbar()
+         self.sb_radio.show()
+         box.pack_start(self.sb_radio, 1, 1, 1)
+ 
+         box.show()
+         return box
++    """
+ 
+     def ev_delete(self, window, event):
+         if not self.close_out():
+@@ -1947,7 +1949,7 @@ of file.
+         ]
+ 
+         for name, key, fn in actions:
+-            a = gtk.Action(name, name, name, "")
++            a = Gtk.Action(name, name, name, "")
+             a.connect("activate", fn)
+             self.menu_ag.add_action_with_accel(a, key)
+             a.set_accel_group(accelg)
+@@ -1980,8 +1982,8 @@ of file.
+             return
+ 
+         CONF.set_int("last_update_check", int(time.time()), "state")
+-        d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK_CANCEL, parent=self,
+-                              type=gtk.MESSAGE_INFO)
++        d = gtk.MessageDialog(buttons=Gtk.ButtonsType.OK, parent=self,
++                              type=gtk.MessageType.INFO)
+         d.label.set_markup(
+             _('A new version of CHIRP is available: ' +
+               '{ver}. '.format(ver=version) +
+@@ -2020,7 +2022,7 @@ of file.
+                 this_platform.find_resource(os.path.join("pixmaps",
+                                                          "chirp.png")))
+         if os.path.exists(icon):
+-            icon_pixmap = gtk.gdk.pixbuf_new_from_file(icon)
++            icon_pixmap = GdkPixbuf.Pixbuf.new_from_file(icon)
+             macapp.set_dock_icon_pixbuf(icon_pixmap)
+ 
+         menu_bar.hide()
+@@ -2041,18 +2043,18 @@ of file.
+         LOG.debug("Initialized MacOS support")
+ 
+     def __init__(self, *args, **kwargs):
+-        gtk.Window.__init__(self, *args, **kwargs)
++        Gtk.Window.__init__(self, *args, **kwargs)
+ 
+         def expose(window, event):
+             allocation = window.get_allocation()
+             CONF.set_int("window_w", allocation.width, "state")
+             CONF.set_int("window_h", allocation.height, "state")
+-        self.connect("expose_event", expose)
++        self.connect("draw", expose)
+ 
+         def state_change(window, event):
+             CONF.set_bool(
+                 "window_maximized",
+-                event.new_window_state == gtk.gdk.WINDOW_STATE_MAXIMIZED,
++                event.new_window_state == Gdk.WindowState.MAXIMIZED,
+                 "state")
+         self.connect("window-state-event", state_change)
+ 
+@@ -2060,7 +2062,7 @@ of file.
+         if d and os.path.isdir(d):
+             platform.get_platform().set_last_dir(d)
+ 
+-        vbox = gtk.VBox(False, 2)
++        vbox = Gtk.VBox(False, 2)
+ 
+         self._recent = []
+ 
+@@ -2082,7 +2084,8 @@ of file.
+         self.ev_tab_switched()
+         vbox.pack_start(tabs, 1, 1, 1)
+ 
+-        vbox.pack_start(self.make_status_bar(), 0, 0, 0)
++        # Cannot find a use, see: make_status_bar function
++        # vbox.pack_start(self.make_status_bar(), True, True, 0)
+ 
+         vbox.show()
+ 
+@@ -2105,7 +2108,7 @@ of file.
+ 
+         if not CONF.get_bool("warned_about_reporting") and \
+                 not CONF.get_bool("no_report"):
+-            d = gtk.MessageDialog(buttons=gtk.BUTTONS_OK, parent=self)
++            d = Gtk.MessageDialog(buttons=Gtk.ButtonsType.OK, parent=self)
+             d.set_markup("<b><big>" +
+                          _("Error reporting is enabled") +
+                          "</big></b>")
+@@ -2126,7 +2129,7 @@ of file.
+         self.setup_extra_hotkeys()
+ 
+         def updates_callback(ver):
+-            gobject.idle_add(self._updates, ver)
++            GObject.idle_add(self._updates, ver)
+ 
+         if not CONF.get_bool("skip_update_check", "state"):
+             reporting.check_for_updates(updates_callback)
+diff --git a/chirp/ui/memdetail.py b/chirp/ui/memdetail.py
+index d58ecde..ef83460 100644
+--- a/chirp/ui/memdetail.py
++++ b/chirp/ui/memdetail.py
+@@ -13,10 +13,16 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+ import os
+ import logging
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
+ from chirp import chirp_common, settings
+ from chirp.ui import miscwidgets, common
+ 
+diff --git a/chirp/ui/memedit.py b/chirp/ui/memedit.py
+index df1f9da..ac6b48c 100644
+--- a/chirp/ui/memedit.py
++++ b/chirp/ui/memedit.py
+@@ -16,7 +16,6 @@
+ 
+ import threading
+ 
+-import gtk
+ import pango
+ from gobject import TYPE_INT, \
+     TYPE_DOUBLE as TYPE_FLOAT, \
+@@ -24,11 +23,19 @@ from gobject import TYPE_INT, \
+     TYPE_BOOLEAN, \
+     TYPE_PYOBJECT, \
+     TYPE_INT64
+-import gobject
+ import pickle
+ import os
+ import logging
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
++from gi.repository import GObject
++
+ from chirp.ui import common, shiftdialog, miscwidgets, config, memdetail
+ from chirp.ui import bandplans
+ from chirp import chirp_common, errors, directory, import_logic
+@@ -506,7 +513,7 @@ class MemoryEditor(common.Editor):
+             def handler(mem):
+                 if not isinstance(mem, Exception):
+                     if not mem.empty or self.show_empty:
+-                        gobject.idle_add(self.set_memory, mem)
++                        GObject.idle_add(self.set_memory, mem)
+ 
+             job = common.RadioJob(handler, "get_memory", cur_pos)
+             job.set_desc(_("Getting memory {number}").format(number=cur_pos))
+@@ -586,7 +593,7 @@ class MemoryEditor(common.Editor):
+             sel = self.view.get_selection()
+             sel.unselect_all()
+             for path in paths:
+-                gobject.idle_add(sel.select_path, (path[0]+delta,))
++                GObject.idle_add(sel.select_path, (path[0]+delta,))
+ 
+         def save_victim(mem, ctx):
+             ctx.victim_mem = mem
+@@ -677,7 +684,7 @@ class MemoryEditor(common.Editor):
+ 
+     def _show_raw(self, cur_pos):
+         def idle_show_raw(result):
+-            gobject.idle_add(common.show_diff_blob,
++            GObject.idle_add(common.show_diff_blob,
+                              _("Raw memory {number}").format(
+                                  number=cur_pos), result)
+ 
+@@ -703,7 +710,7 @@ class MemoryEditor(common.Editor):
+ 
+             if len(raw.keys()) == 2:
+                 diff = common.simple_diff(raw[loc_a], raw[loc_b])
+-                gobject.idle_add(common.show_diff_blob,
++                GObject.idle_add(common.show_diff_blob,
+                                  _("Diff of {a} and {b}").format(a=loc_a,
+                                                                  b=loc_b),
+                                  diff)
+@@ -1059,13 +1066,13 @@ class MemoryEditor(common.Editor):
+         def handler(mem, number):
+             if not isinstance(mem, Exception):
+                 if not mem.empty or self.show_empty:
+-                    gobject.idle_add(self.set_memory, mem)
++                    GObject.idle_add(self.set_memory, mem)
+             else:
+                 mem = chirp_common.Memory()
+                 mem.number = number
+                 mem.name = "ERROR"
+                 mem.empty = True
+-                gobject.idle_add(self.set_memory, mem)
++                GObject.idle_add(self.set_memory, mem)
+ 
+         for i in range(lo, hi+1):
+             job = common.RadioJob(handler, "get_memory", i)
+diff --git a/chirp/ui/miscwidgets.py b/chirp/ui/miscwidgets.py
+index 768cfb6..d649743 100644
+--- a/chirp/ui/miscwidgets.py
++++ b/chirp/ui/miscwidgets.py
+@@ -13,29 +13,31 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+-import gobject
+-import pango
+-
+ import os
+ import logging
+ 
++import gi
++from gi.repository import Gtk
++from gi.repository import Gdk
++from gi.repository import GObject
++from gi.repository import Pango
++
+ from chirp import platform
+ 
+ LOG = logging.getLogger(__name__)
+ 
+ 
+-class KeyedListWidget(gtk.HBox):
++class KeyedListWidget(Gtk.HBox):
+     __gsignals__ = {
+-        "item-selected": (gobject.SIGNAL_RUN_LAST,
+-                          gobject.TYPE_NONE,
+-                          (gobject.TYPE_STRING,)),
+-        "item-toggled": (gobject.SIGNAL_ACTION,
+-                         gobject.TYPE_BOOLEAN,
+-                         (gobject.TYPE_STRING, gobject.TYPE_BOOLEAN)),
+-        "item-set": (gobject.SIGNAL_ACTION,
+-                     gobject.TYPE_BOOLEAN,
+-                     (gobject.TYPE_STRING,)),
++        "item-selected": (GObject.SignalFlags.RUN_LAST,
++                          None,
++                          (GObject.TYPE_STRING,)),
++        "item-toggled": (GObject.SignalFlags.ACTION,
++                         GObject.TYPE_BOOLEAN,
++                         (GObject.TYPE_STRING, GObject.TYPE_BOOLEAN)),
++        "item-set": (GObject.SignalFlags.ACTION,
++                     GObject.TYPE_BOOLEAN,
++                     (GObject.TYPE_STRING,)),
+         }
+ 
+     def _toggle(self, rend, path, colnum):
+@@ -70,15 +72,15 @@ class KeyedListWidget(gtk.HBox):
+             if colnum == 0:
+                 continue  # Key column
+ 
+-            if typ in [gobject.TYPE_STRING, gobject.TYPE_INT,
+-                       gobject.TYPE_FLOAT]:
+-                rend = gtk.CellRendererText()
+-                rend.set_property("ellipsize", pango.ELLIPSIZE_END)
+-                column = gtk.TreeViewColumn(cap, rend, text=colnum)
+-            elif typ in [gobject.TYPE_BOOLEAN]:
+-                rend = gtk.CellRendererToggle()
++            if typ in [GObject.TYPE_STRING, GObject.TYPE_INT,
++                       GObject.TYPE_FLOAT]:
++                rend = Gtk.CellRendererText()
++                rend.set_property("ellipsize", Pango.EllipsizeMode.END)
++                column = Gtk.TreeViewColumn(cap, rend, text=colnum)
++            elif typ in [GObject.TYPE_BOOLEAN]:
++                rend = Gtk.CellRendererToggle()
+                 rend.connect("toggled", self._toggle, colnum)
+-                column = gtk.TreeViewColumn(cap, rend, active=colnum)
++                column = Gtk.TreeViewColumn(cap, rend, active=colnum)
+             else:
+                 raise Exception("Unsupported type %s" % typ)
+ 
+@@ -162,14 +164,14 @@ class KeyedListWidget(gtk.HBox):
+         return keys
+ 
+     def __init__(self, columns):
+-        gtk.HBox.__init__(self, True, 0)
++        Gtk.HBox.__init__(self, True, 0)
+ 
+         self.columns = columns
+ 
+         types = tuple([x for x, y in columns])
+ 
+-        self.__store = gtk.ListStore(*types)
+-        self.__view = gtk.TreeView(self.__store)
++        self.__store = Gtk.ListStore(*types)
++        self.__view = Gtk.TreeView(self.__store)
+ 
+         self.pack_start(self.__view, 1, 1, 1)
+ 
+@@ -182,7 +184,7 @@ class KeyedListWidget(gtk.HBox):
+         if signame == "item-toggled":
+             self.__toggle_connected = True
+ 
+-        gtk.HBox.connect(self, signame, *args)
++        Gtk.HBox.connect(self, signame, *args)
+ 
+     def set_editable(self, column, is_editable):
+         col = self.__view.get_column(column)
+@@ -200,17 +202,17 @@ class KeyedListWidget(gtk.HBox):
+         return self.__view.get_column(colnum).get_cell_renderers()[0]
+ 
+ 
+-class ListWidget(gtk.HBox):
++class ListWidget(Gtk.HBox):
+     __gsignals__ = {
+-        "click-on-list": (gobject.SIGNAL_RUN_LAST,
+-                          gobject.TYPE_NONE,
+-                          (gtk.TreeView, gtk.gdk.Event)),
+-        "item-toggled": (gobject.SIGNAL_RUN_LAST,
+-                         gobject.TYPE_NONE,
+-                         (gobject.TYPE_PYOBJECT,)),
++        "click-on-list": (GObject.SignalFlags.RUN_LAST,
++                          None,
++                          (Gtk.TreeView, Gdk.Event)),
++        "item-toggled": (GObject.SignalFlags.RUN_LAST,
++                         None,
++                         (GObject.TYPE_PYOBJECT,)),
+         }
+ 
+-    store_type = gtk.ListStore
++    store_type = Gtk.ListStore
+ 
+     def mouse_cb(self, view, event):
+         self.emit("click-on-list", view, event)
+@@ -225,24 +227,24 @@ class ListWidget(gtk.HBox):
+         self.emit("item-toggled", vals)
+ 
+     def make_view(self, columns):
+-        self._view = gtk.TreeView(self._store)
++        self._view = Gtk.TreeView(self._store)
+ 
+         for _type, _col in columns:
+             if _col.startswith("__"):
+                 continue
+ 
+             index = columns.index((_type, _col))
+-            if _type == gobject.TYPE_STRING or \
+-                    _type == gobject.TYPE_INT or \
+-                    _type == gobject.TYPE_FLOAT:
+-                rend = gtk.CellRendererText()
+-                column = gtk.TreeViewColumn(_col, rend, text=index)
++            if _type == GObject.TYPE_STRING or \
++                    _type == GObject.TYPE_INT or \
++                    _type == GObject.TYPE_FLOAT:
++                rend = Gtk.CellRendererText()
++                column = Gtk.TreeViewColumn(_col, rend, text=index)
+                 column.set_resizable(True)
+-                rend.set_property("ellipsize", pango.ELLIPSIZE_END)
+-            elif _type == gobject.TYPE_BOOLEAN:
+-                rend = gtk.CellRendererToggle()
++                rend.set_property("ellipsize", Pango.EllipsizeMode.END)
++            elif _type == GObject.TYPE_BOOLEAN:
++                rend = Gtk.CellRendererToggle()
+                 rend.connect("toggled", self._toggle, index)
+-                column = gtk.TreeViewColumn(_col, rend, active=index)
++                column = Gtk.TreeViewColumn(_col, rend, active=index)
+             else:
+                 raise Exception("Unknown column type (%i)" % index)
+ 
+@@ -252,7 +254,7 @@ class ListWidget(gtk.HBox):
+         self._view.connect("button_press_event", self.mouse_cb)
+ 
+     def __init__(self, columns, parent=True):
+-        gtk.HBox.__init__(self)
++        Gtk.HBox.__init__(self)
+ 
+         # pylint: disable-msg=W0612
+         col_types = tuple([x for x, y in columns])
+@@ -346,7 +348,7 @@ class ListWidget(gtk.HBox):
+ 
+ 
+ class TreeWidget(ListWidget):
+-    store_type = gtk.TreeStore
++    store_type = Gtk.TreeStore
+ 
+     # pylint: disable-msg=W0613
+     def _toggle(self, render, path, column):
+@@ -460,24 +462,24 @@ class TreeWidget(ListWidget):
+             raise Exception("Item not found")
+ 
+ 
+-class ProgressDialog(gtk.Window):
++class ProgressDialog(Gtk.Window):
+     def __init__(self, title, parent=None):
+-        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
++        Gtk.Window.__init__(self, Gtk.WindowType.TOPLEVEL)
+         self.set_modal(True)
+-        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
++        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+         self.set_title(title)
+         if parent:
+             self.set_transient_for(parent)
+ 
+         self.set_resizable(False)
+ 
+-        vbox = gtk.VBox(False, 2)
++        vbox = Gtk.VBox(False, 2)
+ 
+-        self.label = gtk.Label("")
++        self.label = Gtk.Label(label="")
+         self.label.set_size_request(100, 50)
+         self.label.show()
+ 
+-        self.pbar = gtk.ProgressBar()
++        self.pbar = Gtk.ProgressBar()
+         self.pbar.show()
+ 
+         vbox.pack_start(self.label, 0, 0, 0)
+@@ -491,20 +493,20 @@ class ProgressDialog(gtk.Window):
+         self.label.set_text(text)
+         self.queue_draw()
+ 
+-        while gtk.events_pending():
+-            gtk.main_iteration_do(False)
++        while Gtk.events_pending():
++            Gtk.main_iteration_do(False)
+ 
+     def set_fraction(self, frac):
+         self.pbar.set_fraction(frac)
+         self.queue_draw()
+ 
+-        while gtk.events_pending():
+-            gtk.main_iteration_do(False)
++        while Gtk.events_pending():
++            Gtk.main_iteration_do(False)
+ 
+ 
+-class LatLonEntry(gtk.Entry):
++class LatLonEntry(Gtk.Entry):
+     def __init__(self, *args):
+-        gtk.Entry.__init__(self, *args)
++        Gtk.Entry.__init__(self, *args)
+ 
+         self.connect("changed", self.format)
+ 
+@@ -601,11 +603,11 @@ class LatLonEntry(gtk.Entry):
+             return False
+ 
+ 
+-class YesNoDialog(gtk.Dialog):
++class YesNoDialog(Gtk.Dialog):
+     def __init__(self, title="", parent=None, buttons=None):
+-        gtk.Dialog.__init__(self, title=title, parent=parent, buttons=buttons)
++        Gtk.Dialog.__init__(self, title=title, parent=parent, buttons=buttons)
+ 
+-        self._label = gtk.Label("")
++        self._label = Gtk.Label(label="")
+         self._label.show()
+ 
+         # pylint: disable-msg=E1101
+@@ -617,9 +619,9 @@ class YesNoDialog(gtk.Dialog):
+ 
+ def make_choice(options, editable=True, default=None):
+     if editable:
+-        sel = gtk.combo_box_entry_new_text()
++        sel = Gtk.combo_box_entry_new_text()
+     else:
+-        sel = gtk.combo_box_new_text()
++        sel = Gtk.ComboBoxText()
+ 
+     for opt in options:
+         sel.append_text(opt)
+@@ -634,9 +636,9 @@ def make_choice(options, editable=True, default=None):
+     return sel
+ 
+ 
+-class FilenameBox(gtk.HBox):
++class FilenameBox(Gtk.HBox):
+     __gsignals__ = {
+-        "filename-changed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
++        "filename-changed": (GObject.SignalFlags.RUN_LAST, None, ()),
+         }
+ 
+     def do_browse(self, _, dir):
+@@ -656,15 +658,15 @@ class FilenameBox(gtk.HBox):
+         self.emit("filename_changed")
+ 
+     def __init__(self, find_dir=False, types=[]):
+-        gtk.HBox.__init__(self, False, 0)
++        Gtk.HBox.__init__(self, False, 0)
+ 
+         self.types = types
+ 
+-        self.filename = gtk.Entry()
++        self.filename = Gtk.Entry()
+         self.filename.show()
+         self.pack_start(self.filename, 1, 1, 1)
+ 
+-        browse = gtk.Button("...")
++        browse = Gtk.Button("...")
+         browse.show()
+         self.pack_start(browse, 0, 0, 0)
+ 
+@@ -679,14 +681,14 @@ class FilenameBox(gtk.HBox):
+ 
+ 
+ def make_pixbuf_choice(options, default=None):
+-    store = gtk.ListStore(gtk.gdk.Pixbuf, gobject.TYPE_STRING)
+-    box = gtk.ComboBox(store)
++    store = Gtk.ListStore(GdkPixbuf.Pixbuf, GObject.TYPE_STRING)
++    box = Gtk.ComboBox(store)
+ 
+-    cell = gtk.CellRendererPixbuf()
++    cell = Gtk.CellRendererPixbuf()
+     box.pack_start(cell, True)
+     box.add_attribute(cell, "pixbuf", 0)
+ 
+-    cell = gtk.CellRendererText()
++    cell = Gtk.CellRendererText()
+     box.pack_start(cell, True)
+     box.add_attribute(cell, "text", 1)
+ 
+@@ -704,9 +706,9 @@ def make_pixbuf_choice(options, default=None):
+ 
+ 
+ def test():
+-    win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+-    lst = ListWidget([(gobject.TYPE_STRING, "Foo"),
+-                      (gobject.TYPE_BOOLEAN, "Bar")])
++    win = Gtk.Window(Gtk.WindowType.TOPLEVEL)
++    lst = ListWidget([(GObject.TYPE_STRING, "Foo"),
++                      (GObject.TYPE_BOOLEAN, "Bar")])
+ 
+     lst.add_item("Test1", True)
+     lst.set_values([("Test2", True), ("Test3", False)])
+@@ -718,15 +720,15 @@ def test():
+     win1 = ProgressDialog("foo")
+     win1.show()
+ 
+-    win2 = gtk.Window(gtk.WINDOW_TOPLEVEL)
++    win2 = Gtk.Window(Gtk.WindowType.TOPLEVEL)
+     lle = LatLonEntry()
+     lle.show()
+     win2.add(lle)
+     win2.show()
+ 
+-    win3 = gtk.Window(gtk.WINDOW_TOPLEVEL)
+-    lst = TreeWidget([(gobject.TYPE_STRING, "Id"),
+-                      (gobject.TYPE_STRING, "Value")],
++    win3 = Gtk.Window(Gtk.WindowType.TOPLEVEL)
++    lst = TreeWidget([(GObject.TYPE_STRING, "Id"),
++                      (GObject.TYPE_STRING, "Value")],
+                      1)
+     lst.set_values({"Fruit": [("Apple", "Red"), ("Orange", "Orange")],
+                     "Pizza": [("Cheese", "Simple"), ("Pepperoni", "Yummy")]})
+@@ -745,7 +747,7 @@ def test():
+     lle.set_text("45 13 12")
+ 
+     try:
+-        gtk.main()
++        Gtk.main()
+     except KeyboardInterrupt:
+         pass
+ 
+diff --git a/chirp/ui/radiobrowser.py b/chirp/ui/radiobrowser.py
+index 83cd968..e6a98ef 100644
+--- a/chirp/ui/radiobrowser.py
++++ b/chirp/ui/radiobrowser.py
+@@ -1,10 +1,17 @@
+-import gtk
+-import gobject
+ import pango
+ import re
+ import os
+ import logging
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
++from gi.repository import GObject
++
+ from chirp import bitwise
+ from chirp.ui import common, config
+ 
+@@ -226,7 +233,7 @@ class RadioBrowser(common.Editor):
+     def _build_ui(self):
+         self._display = gtk.Table(20, 2)
+ 
+-        self._store = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
++        self._store = gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_PYOBJECT)
+         self._tree = gtk.TreeView(self._store)
+ 
+         rend = gtk.CellRendererText()
+diff --git a/chirp/ui/settingsedit.py b/chirp/ui/settingsedit.py
+index 10e9808..5cb8289 100644
+--- a/chirp/ui/settingsedit.py
++++ b/chirp/ui/settingsedit.py
+@@ -13,10 +13,17 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+-import gobject
+ import logging
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
++from gi.repository import GObject
++
+ from chirp import chirp_common
+ from chirp import settings
+ from chirp.ui import common, miscwidgets
+@@ -45,7 +52,7 @@ class SettingsEditor(common.Editor):
+         self.root.pack_start(paned, 1, 1, 0)
+ 
+         # The selection tree
+-        self._store = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT)
++        self._store = gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_INT)
+         self._view = gtk.TreeView(self._store)
+         self._view.get_selection().connect("changed", self._view_changed_cb)
+         self._view.append_column(
+@@ -225,7 +232,7 @@ class SettingsEditor(common.Editor):
+         self._view.expand_all()
+ 
+     def _get_settings_cb(self, settings):
+-        gobject.idle_add(self._build_ui, settings)
++        GObject.idle_add(self._build_ui, settings)
+ 
+     def _view_changed_cb(self, selection):
+         (lst, iter) = selection.get_selected()
+diff --git a/chirp/ui/shiftdialog.py b/chirp/ui/shiftdialog.py
+index b975dbf..8daebf1 100644
+--- a/chirp/ui/shiftdialog.py
++++ b/chirp/ui/shiftdialog.py
+@@ -14,11 +14,18 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-import gtk
+-import gobject
+ import threading
+ import logging
+ 
++# Compatibility Layer (temporary)
++from gi import pygtkcompat
++pygtkcompat.enable()
++pygtkcompat.enable_gtk(version='3.0')
++
++import gtk
++
++from gi.repository import GObject
++
+ from chirp import errors, chirp_common
+ 
+ LOG = logging.getLogger(__name__)
+@@ -52,7 +59,7 @@ class ShiftDialog(gtk.Dialog):
+         self.__prog.set_fraction(prog)
+ 
+     def status(self, msg, prog):
+-        gobject.idle_add(self._status, msg, prog)
++        GObject.idle_add(self._status, msg, prog)
+ 
+     def _shift_memories(self, delta, memories):
+         count = 0.0
+@@ -125,9 +132,9 @@ class ShiftDialog(gtk.Dialog):
+ 
+     def finished(self):
+         if self.quiet:
+-            gobject.idle_add(self.response, gtk.RESPONSE_OK)
++            GObject.idle_add(self.response, gtk.RESPONSE_OK)
+         else:
+-            gobject.idle_add(self.set_response_sensitive,
++            GObject.idle_add(self.set_response_sensitive,
+                              gtk.RESPONSE_OK, True)
+ 
+     def threadfn(self, newhole, func, *args):
+diff --git a/chirpw b/chirpw
+index 23572c5..5e64f8a 100755
+--- a/chirpw
++++ b/chirpw
+@@ -140,11 +140,21 @@ a.show()
+ if args.profile:
+     import cProfile
+     import pstats
++    # Compatibility Layer (temporary)
++    from gi import pygtkcompat
++    pygtkcompat.enable()
++    pygtkcompat.enable_gtk(version='3.0')
++
+     import gtk
+     cProfile.run("gtk.main()", "chirpw.stats")
+     p = pstats.Stats("chirpw.stats")
+     p.sort_stats("cumulative").print_stats(10)
+ else:
++    # Compatibility Layer (temporary)
++    from gi import pygtkcompat
++    pygtkcompat.enable()
++    pygtkcompat.enable_gtk(version='3.0')
++
+     import gtk
+     gtk.main()
+ 
+-- 
+2.18.0
+
